@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 #
-#Copyright 2019 NXP
+#Copyright 2019-2021 NXP
 #
 
 from flask import Flask, render_template, request
 from flask import jsonify
 from xml.etree import ElementTree as ET
+from threading import Thread
 import json
 import subprocess
 import sys
@@ -13,6 +14,10 @@ import time, threading
 import netconf
 import pexpect
 import math
+import asyncio
+import websockets
+import pprint
+import os
 
 def removeknowhost():
 	print("remove /root/.ssh/known_hosts");
@@ -511,43 +516,225 @@ def configp8021cbHTML():
     return render_template('configp8021cb.html')
 
 devices = {}
+ginterfaces = {}
+gneighbors = {}
+
+WS_CMD_INTERFACES = "get interfaces"
+WS_CMD_NEIGHBORS = "get neighbors"
+
+async def get_ifc_nb(uri, dname):
+    print(f"{uri}--->")
+    global ginterfaces
+    global gneighbors
+    try:
+       async with websockets.connect(uri, close_timeout=1) as websocket:
+           await websocket.send(WS_CMD_INTERFACES)
+           try:
+               interfaces = await asyncio.wait_for(websocket.recv(), timeout=1.0)
+           except asyncio.TimeoutError:
+               print('Wait receive interfaces TIMEOUT');
+#           print(f"{interfaces}")
+#           device['interfaces'] = 'interfaces';
+           ginterfaces[dname] = json.loads(interfaces);
+           await websocket.send(WS_CMD_NEIGHBORS)
+           try:
+               neighbors = await asyncio.wait_for(websocket.recv(), timeout=1.0)
+           except asyncio.TimeoutError:
+               print("Wait receive neighbors TIMEOUT");
+#           print(f"{neighbors}")
+#           device['neighbors'] = 'neighbors';
+           gneighbors[dname] = json.loads(neighbors);
+           print("------->----------------")
+           await websocket.close();
+    except websockets.ConnectionClosed:
+           print("connection OK");
+    except:
+           print("Connect "+uri+" FAIL!");
+
+def get_device_link(uri, dname):
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    asyncio.get_event_loop().run_until_complete(get_ifc_nb(uri, dname))
+
+neighbors_for_client= {};
+interfaces_for_client = {};
+
+def getLinksFromNeighborships():
+    print("getLinksFromNeighborships")
+    global gneighbors
+    global neighbors_for_client;
+    links = {'links':[]}
+    neighbors_client = { };
+
+    if not gneighbors:
+        return (links);
+    for key,value in gneighbors.items():
+        if not value['lldp'][0]:
+            continue;
+        neighbors_client[key] = [];
+        for interface in value['lldp'][0]['interface']:
+            rneighbor = interface['chassis'][0]['descr'][0]['value']
+            #default link could check 'port''current', just set 1 here
+            candidate = {"source":key, "target":rneighbor, "value":1};
+            rport = interface['port'][0]['descr'][0]['value']
+            one_nfc = {"local_intf":interface['name'], "neighbor":rneighbor, "neighbor_intf":rport }
+            neighbors_client[key].append(one_nfc);
+            links['links'].append(candidate)
+
+    neighbors_for_client = neighbors_client;
+    return(links)
+
+def getNodesFromNeighborships():
+    print("getNodesFromNeighborships:")
+    global ginterfaces
+    global gneighbors
+    global interfaces_for_client
+    nodes = {'nodes':[]}
+    bridges_list = []
+    interfaces_client = {}
+    if not ginterfaces:
+        return (nodes)
+    for key,value in ginterfaces.items():
+        candidate = {"id":key,"group":2}
+        nodes['nodes'].append(candidate)
+        bridges_list.append(key);
+        interfaces_client[key] = [];
+        if not value['lldp'][0]:
+            continue;
+        for infs in value['lldp'][0]['interface']:
+            if (infs['via'] == 'unknown'):
+                one_inf = {"actual_bandwith":"1000000", "admin_status": "UP",
+                        "description": "1G Interface",
+                        "local_intf":infs['name'],
+                        "oper_status": "UP"};
+                interfaces_client[key].append(one_inf)
+
+    interfaces_for_client = interfaces_client;
+
+    if not gneighbors:
+        return (nodes);
+    for key,value in gneighbors.items():
+        if not value['lldp'][0]:
+            continue;
+        for interface in value['lldp'][0]['interface']:
+            rinterface = interface['chassis'][0]['descr'][0]['value']
+            if rinterface not in bridges_list:
+                candidate = {"id":rinterface, "group":1}
+                nodes['nodes'].append(candidate)
+                bridges_list.append(rinterface)
+
+    return(nodes)
+
+@app.route('/topology/graph.json',methods=['GET'])
+def get_graph_file():
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, "templates/topology", "graph.json")
+    with open(json_url, 'r') as outfile:
+        graphjson = json.loads(outfile.read())
+        print(graphjson)
+        return (graphjson)
+
+@app.route('/topology/neighborships.json',methods=['GET'])
+def get_device_neighbors():
+   global neighbors_for_client;
+   devicename = request.args.get('device');
+   print(devicename)
+   print(neighbors_for_client)
+   if (neighbors_for_client.__contains__(devicename)):
+       return({devicename:neighbors_for_client[devicename]})
+   else:
+       return({devicename:[]})
+
+
+@app.route('/topology/no_neighbor_interfaces.json',methods=['GET'])
+def get_device_noneighbor_interfaces():
+    devicename = request.args.get('device');
+    print(devicename)
+    print(interfaces_for_client)
+    if (interfaces_for_client.__contains__(devicename)):
+        return ({devicename:interfaces_for_client[devicename]})
+    else:
+        return({devicename:[]})
+
+
+def get_topology():
+    '''
+    NOW LETS FORMAT THE DICTIONARY TO NEEDED D3 LIbary JSON
+    '''
+    print("================")
+    print("NODES DICTIONARY")
+    print("================")
+    nodes_dict = getNodesFromNeighborships()
+    print(nodes_dict)
+
+    print("================")
+    print("LINKS DICTIONARY")
+    print("================")
+    links_dict = getLinksFromNeighborships()
+    print(links_dict)
+
+    print("==========================================")
+    print("VISUALIZATION graph.json DICTIONARY MERGE")
+    print("==========================================")
+    visualization_dict = {'nodes':nodes_dict['nodes'],'links':links_dict['links']}
+
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, "templates/topology", "graph.json")
+    with open(json_url, 'w') as outfile:
+        json.dump(visualization_dict, outfile, sort_keys=True, indent=4)
+        print("")
+        print("JSON printed into graph.json")
 
 def probe_boards(n):
-	global devices
-	while 1 :
-	  devices_temp = {}
-	  output = subprocess.Popen('avahi-browse -a -d local -t | grep OpenIL', \
-				    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT)
+    global devices
+    while True:
+        devices_temp = {}
+        output = subprocess.Popen('avahi-browse -a -d local -t | grep OpenIL', \
+                shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT)
 
-	  i = 0
-	  for line in iter(output.stdout.readline, b''):
-	     line_txt = line.decode("utf-8")
-	     devices_list = line_txt.split()
-	     if (devices_list[4] != 'SSH') and (devices_list[4] != 'ssh._tcp') :
-		     continue
-	     board = '%s.local'%(devices_list[3])
-	     result = subprocess.Popen('avahi-resolve-host-name %s' %(board), \
-				     shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT)
+        i = 0
+        for line in iter(output.stdout.readline, b''):
+            line_txt = line.decode("utf-8")
+            devices_list = line_txt.split()
+            if (devices_list[4] != 'SSH') and (devices_list[4] != 'ssh._tcp') :
+                continue
+            board = '%s.local'%(devices_list[3])
+            result = subprocess.Popen('avahi-resolve-host-name %s' %(board), \
+                    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT)
 
-	     resultb = result.stdout.readline()
-	     resulte_txt = resultb.decode("utf-8")
-	     resulte_list = resulte_txt.split()
-	     if (resulte_list[0] == 'Failed') :
-	         continue
-	     if (devices_temp.__contains__(resulte_list[0])) :
-	         continue
-	     devices_temp[resulte_list[0]] = resulte_list[1]
-	     i += 1
-	  
-	  mutex.acquire()
-	  devices.clear()
-	  j = 0
-	  for key, value in devices_temp.items():
-	      devices[j] = {'name': key, 'ip': value}
-	      j += 1
-	  mutex.release()
-	  print (devices)
-	  time.sleep(5)
+            resultb = result.stdout.readline()
+            resulte_txt = resultb.decode("utf-8")
+            resulte_list = resulte_txt.split()
+            if (resulte_list[0] == 'Failed') :
+                continue
+            if (devices_temp.__contains__(resulte_list[0])) :
+                continue
+            devices_temp[resulte_list[0]] = resulte_list[1]
+            i += 1
+
+        mutex.acquire()
+        print("==========================")
+        pprint.pprint(gneighbors.keys())
+        print("--------------------------")
+        pprint.pprint(ginterfaces.keys())
+        print("==========================")
+        get_topology()
+
+        ginterfaces.clear()
+        gneighbors.clear()
+        devices.clear()
+
+        j = 0
+        for key, value in devices_temp.items():
+            devices[j] = {'name': key, 'ip': value}
+            uri = f"ws://{value}:8181"
+            t = Thread(target=get_device_link, args=(uri, key))
+            t.daemon = True
+            t.start()
+            j += 1
+        mutex.release()
+        print (devices)
+        time.sleep(5)
 
 @app.route('/getdevices')
 def getdevices():
@@ -566,7 +753,7 @@ except:
 mutex = threading.Lock()
 
 if __name__ == '__main__':
-    app.run(host = "0.0.0.0" , port = 8180, debug = True)
+    app.run(host = "0.0.0.0" , port = 8180)
 
 t_probeboards.join()
 

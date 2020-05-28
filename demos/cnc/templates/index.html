@@ -1,53 +1,419 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>TSN Devices List</title>
-    <script src="static/jquery.min.js">
-    </script>
-    <style>
-	.button {
-	    background-color: #4CAF50; /* Green */
-	    border: none;
-	    color: white;
-	    padding: 6px 10px;
-	    text-align: center;
-	    text-decoration: none;
-	    display: inline-block;
-	    font-size: 15px;
-	    margin: 2px 1px;
-	    -webkit-transition-duration: 0.4s; /* Safari */
-	    transition-duration: 0.4s;
-	    cursor: pointer;
-	}
-	.link {
-	    background-color: white; 
-	    color: black; 
-	    padding: 4px 8px;
-	    border: 2px solid #4CAF50;
-	    border-radius: 5%;
-	    text-align: left;
-	    font-size: 30px;
-	}
-	.link:hover {
-	    background-color: #4CAF50;
-	    color: white;
-	}
-    </style>
+<meta charset="utf-8">
+<link rel='stylesheet' href="{{ url_for('static', filename='css/style.css') }}" type='text/css' media='all' />
+<body>
+<div style="height:100%;width:10%;float:left;">
+	<p  style="font-size: 30px;cursor : crosshair;">devices list</p>
+	<hr />
+	<ul id="devices">	</ul>
+	<hr />
+</div>
+<div width="90%" float="right">
+<table><tr><td>
+  <svg width="100%" height="100%"></svg>
+</td><td>
+  <div class="infobox" id="infobox" >
+      CLICK ON DEVICE FOR NEIGHBOR/INTERFACE INFORMATION
+  </div>
+  <div class="infobox2" id="infobox2" >
+  </div>  
+</td></tr></table >
+</div>
+</body>
+<script src="static/d3.v4.min.js"></script>
+<script src="static/jquery.min.js"></script>
 <script>
 
+// =============================
+// PRINTING DEVICE DETAILS TABLE
+// =============================
+
+// ====================
+// READING OF JSON FILE
+// ====================
+function readTextFile(file, deviceid, callback) {
+    var rawFile = new XMLHttpRequest();
+    rawFile.overrideMimeType("application/json");
+    rawFile.open("GET", file+"?device="+deviceid, true);
+    rawFile.onreadystatechange = function() {
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+            callback(rawFile.responseText);
+        }
+    }
+    rawFile.send(null);
+}
+
+function OnClickDetails(deviceid){
+  //alert("devicedetails: " + deviceid);
+  //usage:
+
+  // #############################
+  // # READING NEIGHBORS         #
+  // #############################
+  readTextFile("topology/neighborships.json", deviceid, function(text){
+      var data = JSON.parse(text);
+      console.log(data);
+      console.log(deviceid);
+
+      bFoundMatch = 0;
+      for (var key in data) {
+        console.log("Key: " + key + " vs " + deviceid);
+
+        if ((deviceid.localeCompare(key)) == 0){
+          console.log("match!");
+          bFoundMatch = 1;
+          text = tableFromNeighbor(key,data);
+
+	  printToDivWithID("infobox","<h2><u>" + key + "</u></h2>" + text);
+        }
+      }
+      if (!(bFoundMatch)){
+        warning_text = "<h4>The selected device id: ";
+        warning_text+= deviceid;
+        warning_text+= " is not in database!</h4>";
+        warning_text+= "This is most probably as you clicked on edge node ";
+        warning_text+= "that is not NETCONF data gathered, try clicking on its neighbors.";
+        printToDivWithID("infobox",warning_text);
+      }
+  });
+
+  // ####################################
+  // # READING NEIGHBOR-LESS INTERFACES #
+  // ####################################
+  readTextFile("topology/no_neighbor_interfaces.json", deviceid, function(text){
+      var data = JSON.parse(text);
+      console.log(data);
+      console.log(deviceid);
+
+      bFoundMatch = 0;
+      for (var key in data) {
+        console.log("Key: " + key + " vs " + deviceid);
+
+        if ((deviceid.localeCompare(key)) == 0){
+          console.log("match!");
+          bFoundMatch = 1;
+          text = tableFromUnusedInterfaces(key,data);
+          printToDivWithID("infobox2","<font color=\"red\">Enabled Interfaces without LLDP Neighbor:</font><br>" + text);
+        }
+      }
+      if (!(bFoundMatch)){
+        printToDivWithID("infobox2","");
+      }
+  });
+}
+
+// ####################################
+// # using input parameters returns
+// # HTML table with these inputs
+// ####################################
+function tableFromUnusedInterfaces(key,data){
+  text = "<table class=\"infobox2\">";
+  text+= "<thead><th><u><h4>LOCAL INT.</h4></u></th><th><u><h4>DESCRIPTION</h4></u></th><th><u><h4>Bandwith</h4></u></th>";
+  text+= "</thead>";
+
+  for (var neighbor in data[key]) {
+    text+= "<tr>";
+
+    console.log("local_intf:" + data[key][neighbor]['local_intf']);
+    text+= "<td>" + data[key][neighbor]['local_intf'] + "</td>";
+    console.log("description:" + data[key][neighbor]['description']);
+    text+= "<td>" + data[key][neighbor]['description'] + "</td>";
+    console.log("actual_bandwith:" + data[key][neighbor]['actual_bandwith']);
+    text+= "<td>" + data[key][neighbor]['actual_bandwith'] + "</td>";
+
+    text+= "</tr>";
+  }
+
+  text+= "</table>";
+
+  return text;
+}
+
+// ####################################
+// # using input parameters returns
+// # HTML table with these inputs
+// ####################################
+function tableFromNeighbor(key,data){
+  text = "<table class=\"infobox\">";
+  text+= "<thead><th><u><h4>LOCAL INT.</h4></u></th><th><u><h4>NEIGHBOR</h4></u></th><th><u><h4>NEIGHBOR'S INT</h4></u></th>";
+  text+= "</thead>";
+
+  for (var neighbor in data[key]) {
+    text+= "<tr>";
+
+    console.log("local_intf:" + data[key][neighbor]['local_intf']);
+    text+= "<td>" + data[key][neighbor]['local_intf'] + "</td>";
+    console.log("neighbor_intf:" + data[key][neighbor]['neighbor_intf']);
+    text+= "<td>" + data[key][neighbor]['neighbor'] + "</td>";
+    console.log("neighbor:" + data[key][neighbor]['neighbor']);
+    text+= "<td>" + data[key][neighbor]['neighbor_intf'] + "</td>";
+
+    text+= "</tr>";
+  }
+
+  text+= "</table>";
+
+  return text;
+}
+
+// ####################################
+// # replaces content of specified DIV
+// ####################################
+function printToDivWithID(id,text){
+  div = document.getElementById(id);
+  div.innerHTML = text;
+}
+
+// ########
+// # MAIN #
+// ########
+var svg = d3.select("svg"),
+    width  = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth,
+    height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+    
+    d3.select("svg").attr("height",height)
+    d3.select("svg").attr("width",width*0.7)  
+
+var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d.id; }).distance(100).strength(0.001))
+    .force("charge", d3.forceManyBody().strength(-200).distanceMax(500).distanceMin(50))
+    .force("x", d3.forceX(function(d){
+			if(d.group == "1"){
+				return 5*(width*0.7)/6
+			} else if (d.group == "2"){
+				return 4*(width*0.7)/6
+			} else if (d.group == "3"){
+				return 3*(width*0.7)/6
+			} else if (d.group == "4"){
+				return 2*(width*0.7)/6  
+			} else if (d.group == "5"){
+				return 1*(width*0.7)/6                       
+			} else {
+				return 0*(width*0.7)/6 
+			}
+		 }).strength(1))
+    .force("y", d3.forceY(height/2))
+    .force("center", d3.forceCenter((width*0.7) / 2, height / 2))
+    .force("collision", d3.forceCollide().radius(35));
+
+var oldgraph = {
+	links:[],
+	nodes:[]
+};
+
+function checkaddlinks(newlinks) {
+
+	if (newlinks == undefined)
+		return;
+	var len;
+	len = newlinks.length;
+	var len2 = oldgraph.links.length;
+	var mape = new Array();
+
+	if (len === 0) {
+		oldgraph.links.length = 0;
+		return;
+	}
+	for (let i=len -1; i >= 0; i--) {
+		var find = 0;
+		let j = 0;
+		for (j = 0; j < len2; j++) {
+			if ((newlinks[i].target == oldgraph.links[j].target.id) &&
+				(newlinks[i].source == oldgraph.links[j].source.id)) {
+				find = 1;
+				break;
+			}
+		}
+		console.log(j);
+		if (find === 0) {
+			oldgraph.links.push(newlinks[i]);
+		} else {
+			mape.push(j);
+		}
+	}
+
+	mape.sort(function sortNumber(a,b){return a - b	});
+
+	for (let k = len2 - 1; k >= 0; k--) {
+		if (mape.indexOf(k) === -1) {
+			console.log("remove link");
+			console.log( oldgraph.links[k]);
+			oldgraph.links.splice(k, 1);
+		}
+	}
+}
+
+function checkaddnodes(newnodes) {
+
+	var len;
+
+	if (newnodes == undefined)
+		return;
+
+	len = newnodes.length;
+	var len2 = oldgraph.nodes.length;
+	var mape = new Array();
+
+	if (len === 0) {
+		oldgraph.nodes.length = 0;
+	}
+	for (let i=len - 1; i >= 0; i--) {
+		var find = 0;
+		let j = 0;
+		for (j = 0; j < len2; j++) {
+			if (newnodes[i].id == oldgraph.nodes[j].id) {
+				find = 1;
+				break;
+			}
+		}
+		if (find == 0) {
+			oldgraph.nodes.push(newnodes[i]);
+		} else {
+			//oldgraph.nodes.splice(j, 1);
+			mape.push(j);
+		}
+	}
+
+	mape.sort(function sortNumber(a,b){return a - b	});
+	for (let k = len2 - 1; k >= 0 ; k--) {
+		if (mape.indexOf(k) === -1) {
+			console.log("remove node:");
+			console.log(oldgraph.nodes[k]);
+			oldgraph.nodes.splice(k, 1);
+		}
+
+	}
+};
+
+setInterval(function () {
+
+	$.get("topology/graph.json", function(rdata, status) {
+	var rgraph = {
+		links:[],
+		nodes:[]
+	};
+
+	console.log("--------------------------");
+	console.log(rdata);
+
+	rgraph = rdata;
+	
+	console.log(rgraph);
+
+	checkaddlinks(rgraph.links);
+	checkaddnodes(rgraph.nodes);
+	console.log(oldgraph);
+
+	//To fix photo capture
+	//TODO: disapear
+	svg.selectAll("g").remove();
+
+	var link = svg.selectAll("g.line")
+			.data(oldgraph.links, function(d) {
+				return d.source.id + "-" + d.target.id;
+			})
+
+	link.exit().remove();
+
+	var node = svg.selectAll("g.a")
+		.data(oldgraph.nodes)
+	node.exit().remove();
+
+	var linkadd = link.enter().append("g")
+		.append("line")
+		.attr("stroke", function(d) { return color(parseInt(d.value)); })
+		.attr("stroke-width", function(d) { return Math.sqrt(parseInt(d.value)); })
+		.attr("id", function(d){
+				d.source.id + "-" + d.target.id;
+			});
+
+	var nodeadd = node.enter().append("g")
+		.attr("class", "nodes")
+		.append("a")
+		.attr("target", '_blank')
+		.attr("xlink:href",  function(d) { return (window.location.href + '?device=' + d.id) });
+
+	nodeadd.on("click", function(d,i){ 
+		d3.event.preventDefault();
+		d3.event.stopPropagation();
+		OnClickDetails(d.id);
+		}
+	);
+
+	nodeadd.call(d3.drag()
+	.on("start", dragstarted)
+	.on("drag", dragged)
+	.on("end", dragended));
+  
+	nodeadd.append("image")
+		.attr("xlink:href", function(d) { return ("static/img/group" + d.group + ".png"); })
+		.attr("width", 32)
+		.attr("height", 32)
+		.attr("x", - 16)
+		.attr("y", - 16)
+		.attr("fill", function(d) { return color(d.group); });
+  
+	nodeadd.append("text")
+		.attr("font-size", "0.8em") 
+		.attr("dx", 12)
+		.attr("dy", ".35em")
+		.attr("x", +8)
+		.text(function(d) { return d.id });
+
+	nodeadd.append("title")
+		.text(function(d) { return d.id; });
+
+	simulation
+		.nodes(oldgraph.nodes)
+		.on("tick", ticked);
+
+	simulation.force("link")
+		.links(oldgraph.links);
+
+	simulation.alphaTarget(0.3).restart();
+
+	function ticked() {
+		linkadd
+			.attr("x1", function(d) { return d.source.x; })
+			.attr("y1", function(d) { return d.source.y; })
+			.attr("x2", function(d) { return d.target.x; })
+			.attr("y2", function(d) { return d.target.y; });
+
+		nodeadd
+			.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"});
+	}
+	});
+
+}, 2000);
+
+function dragstarted(d) {
+  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(d) {
+  d.fx = d3.event.x;
+  d.fy = d3.event.y;
+}
+
+function dragended(d) {
+  if (!d3.event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+</script>
+
+<script>
  /* Jump to new page */
   function LoadconfigdeviceHTML(n, i)
   {
 	window.location.replace('/configdeviceHTML?name='+n+'&ip='+i);
   }
 
-</script>
-
-</head>
-<body>
-
-<script>
 setInterval(function () {
 		$.get("/getdevices", function(data, status) {
 				console.log(data);
@@ -55,8 +421,8 @@ setInterval(function () {
 				$.each(data, function(i, field){
 					$("#devices").append(function() {
 						var refdev;
-						refdev = "<li class=\"button link\"><a id=\"dev" + i + "\" href=\"javascript:LoadconfigdeviceHTML('"+field.name+"','"+field.ip+"');\">";
-						refdev += field.name + "</a>" + field.ip;
+						refdev = "<li><a id=\"dev" + i + "\" href=\"javascript:LoadconfigdeviceHTML('"+field.name+"','"+field.ip+"');\">";
+						refdev += field.name + "</a>";
 						refdev += "</li><br>";
 						console.log(refdev);
 						return (refdev);
@@ -66,15 +432,3 @@ setInterval(function () {
 }, 2000);
 </script>
 
-
-<h1>CNC Test</h1>
-
-	<p class="button" style="font-size: 30px;cursor : crosshair;">devices list</p>
-	<hr />
-	<ul class="button" id=devices>	</ul>
-
-	<hr />
-
-<div id="createtable"></div>
-</body>
-</html>

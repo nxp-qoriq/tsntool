@@ -1,0 +1,118 @@
+.links line {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.infobox {
+  font-size:  0.9em;
+  width: 100%;
+  padding: 15px;
+}
+
+table.infobox {
+  border: 2px solid #000000;
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+table.infobox td, table.infobox th {
+  border: 1px solid #000000;
+  padding: 3px 4px;
+}
+table.infobox tbody td {
+  font-size: 13px;
+}
+table.infobox td:nth-child(even) {
+  background: #EBEBEB;
+}
+table.infobox thead {
+  background: #FFFFFF;
+  border-bottom: 4px solid #333333;
+}
+table.infobox thead th {
+  font-size: 15px;
+  font-weight: bold;
+  color: #333333;
+  text-align: center;
+  border-left: 2px solid #333333;
+}
+table.infobox thead th:first-child {
+  border-left: none;
+}
+
+table.infobox tfoot {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333333;
+  border-top: 4px solid #333333;
+}
+table.infobox tfoot td {
+  font-size: 14px;
+}
+
+.infobox2 {
+  font-size:  0.9em;
+  width: 100%;
+  padding: 15px;
+}
+
+table.infobox2 {
+  border: 2px solid #000000;
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+table.infobox2 td, table.infobox th {
+  border: 1px solid #000000;
+  padding: 3px 4px;
+}
+table.infobox2 tbody td {
+  font-size: 13px;
+}
+table.infobox2 td:nth-child(even) {
+  background: #EBCCCC;
+}
+table.infobox2 thead {
+  background: #FFFFFF;
+  border-bottom: 4px solid #333333;
+}
+table.infobox2 thead th {
+  font-size: 15px;
+  font-weight: bold;
+  color: #333333;
+  text-align: center;
+  border-left: 2px solid #333333;
+}
+table.infobox2 thead th:first-child {
+  border-left: none;
+}
+
+table.infobox2 tfoot {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333333;
+  border-top: 4px solid #333333;
+}
+table.infobox2 tfoot td {
+  font-size: 14px;
+}
+
+.nodes circle {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.svg-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%; /* aspect ratio */
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}

@@ -51,14 +51,24 @@ BR2_PACKAGE_NETOPEER=y
 
 RUN:
 ----
-run the webserver at the PC side.
+Client devices run:
+lldpd -I swp0,swp1,swp2,swp3
+python topoagent.py
+
+Run the webserver at the PC side.
 sudo python3 cnc.py
 Open a browser in local domain machine.
 Input the ip of webserver PC:
 http://10.193.20.147:8180
 
 HISTORY:
+--------
 v1: Support Qbv and Qbu setting.
     Recommend to check the boards with tsntool to check the real configure
     for comparation.
+v1.1: Support Qci setting.
+v2: Support devices dynamic topology discovery
 
+Author:
+-------
+Po Liu <Po.Liu@nxp.com>
