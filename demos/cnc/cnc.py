@@ -5,6 +5,7 @@
 
 from flask import Flask, render_template, request
 from flask import jsonify
+from flask_restful import Api, Resource
 from xml.etree import ElementTree as ET
 from threading import Thread
 import json
@@ -416,6 +417,7 @@ def loadgetconfig(configdata):
     return ('true', getfeedback);
 
 app = Flask(__name__)
+api = Api(app)
 #app.config['SECRET_KEY'] = "dfdfdffdad"
 
 #app.config.from_object('config')
@@ -628,7 +630,7 @@ def getNodesFromNeighborships():
 @app.route('/topology/graph.json',methods=['GET'])
 def get_graph_file():
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-    json_url = os.path.join(SITE_ROOT, "templates/topology", "graph.json")
+    json_url = os.path.join(SITE_ROOT, "templates/topology", "graph1.json")
     with open(json_url, 'r') as outfile:
         graphjson = json.loads(outfile.read())
         print(graphjson)
@@ -744,6 +746,44 @@ def getdevices():
 	mutex.release()
 	return reply
 
+REST_APIs = {
+        '/restapi'  : "List all REST APIs",
+        '/restapi/topo' : "topology graph data",
+        '/restapi/devicelist' : "get devices list",
+        '/restapi/devicelist/<devicename>' : "get one device interfaces"
+        }
+
+class restapi_list(Resource):
+    def get(self):
+        return REST_APIs
+
+class topoview(Resource):
+    def get(self):
+        print ("RESTful API get topoview");
+        with open("templates/topology/graph.json", 'r') as outfile:
+            graphjson = json.loads(outfile.read())
+            print(graphjson)
+            return {'code': 200, 'msg': 'success', 'data':graphjson}
+        return {'code': 404, 'msg': 'failure', 'data':{}}
+
+    def post(self):
+        return {'code': 404, 'msg': 'failure', 'data':{}}
+
+class device_list(Resource):
+    def get(self):
+        global devices
+        return {
+                'code' : 200,
+                'msg' : 'success',
+                'data' : devices
+                }
+
+class device_detail(Resource):
+    def get(self, devicename):
+        if not ginterfaces[devicename]:
+            return {'code': 404, 'msg': 'failure, no such device', 'data':{}}
+        return {'code': 200, 'msg': 'success', 'data':ginterfaces[devicename]}
+
 try:
    t_probeboards = threading.Thread(target=probe_boards, args=(5,))
    t_probeboards.start()
@@ -751,6 +791,11 @@ except:
 	print ("Error: start new threading")
 
 mutex = threading.Lock()
+
+api.add_resource(restapi_list, '/restapi')
+api.add_resource(topoview, '/restapi/topo')
+api.add_resource(device_list, '/restapi/devicelist')
+api.add_resource(device_detail, '/restapi/devicelist/<string:devicename>')
 
 if __name__ == '__main__':
     app.run(host = "0.0.0.0" , port = 8180)
