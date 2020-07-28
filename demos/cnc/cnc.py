@@ -520,16 +520,19 @@ def configp8021cbHTML():
 devices = {}
 ginterfaces = {}
 gneighbors = {}
+gdelays = {}
 
 WS_CMD_INTERFACES = "get interfaces"
 WS_CMD_NEIGHBORS = "get neighbors"
+WS_CMD_DELAYS = "get delay"
 
 async def get_ifc_nb(uri, dname):
     print(f"{uri}--->")
     global ginterfaces
     global gneighbors
+    global gdelays
     try:
-       async with websockets.connect(uri, close_timeout=1) as websocket:
+       async with websockets.connect(uri) as websocket:
            await websocket.send(WS_CMD_INTERFACES)
            try:
                interfaces = await asyncio.wait_for(websocket.recv(), timeout=1.0)
@@ -546,11 +549,35 @@ async def get_ifc_nb(uri, dname):
 #           print(f"{neighbors}")
 #           device['neighbors'] = 'neighbors';
            gneighbors[dname] = json.loads(neighbors);
+           await websocket.send(WS_CMD_DELAYS)
+           try:
+               delays = await asyncio.wait_for(websocket.recv(), timeout=2.0)
+           except asyncio.TimeoutError:
+               print("Wait receive delays TIMEOUT");
+           gdelays[dname] = delays
+           print(gdelays)
            print("------->----------------")
            await websocket.close();
     except websockets.ConnectionClosed:
            print("connection OK");
+    except websockets.ConnectionClosedOK:
+           print("close ok")
+    except websockets.ConnectionClosedError:
+           print("closcked Error")
+    except websockets.InvalidHandshake:
+           print("invalid handshake")
+    except websockets.InvalidState:
+           print("invaid state")
+    except websockets.InvalidURI:
+           print("invalid uri")
+    except websockets.NegotiationError:
+           print("negotiation error")
+    except websockets.InvalidMessage:
+           print("invalid message")
+    except websockets.WebSocketException:
+           print("websockets exception");
     except:
+           await websocket.close()
            print("Connect "+uri+" FAIL!");
 
 def get_device_link(uri, dname):
@@ -750,7 +777,9 @@ REST_APIs = {
         '/restapi'  : "List all REST APIs",
         '/restapi/topo' : "topology graph data",
         '/restapi/devicelist' : "get devices list",
-        '/restapi/devicelist/<devicename>' : "get one device interfaces"
+        '/restapi/devicelist/<devicename>' : "get one device interfaces",
+	'/restapi/delays' : "get ports delay",
+	'/restapi/delays/<devicename>' : "get one device ports delay"
         }
 
 class restapi_list(Resource):
@@ -784,6 +813,22 @@ class device_detail(Resource):
             return {'code': 404, 'msg': 'failure, no such device', 'data':{}}
         return {'code': 200, 'msg': 'success', 'data':ginterfaces[devicename]}
 
+class delays(Resource):
+    def get(self):
+        global gdelays
+        return {
+                'code' : 200,
+                'msg' : 'success',
+                'data' : gdelays
+                }
+
+class delays_ports(Resource):
+    def get(self, devicename):
+        global gdelays
+        if not gdelays[devicename]:
+            return {'code': 404, 'msg': 'failure, no such device', 'data':{}}
+        return {'code': 200, 'msg': 'success', 'data':gdelays[devicename]}
+
 try:
    t_probeboards = threading.Thread(target=probe_boards, args=(5,))
    t_probeboards.start()
@@ -796,6 +841,8 @@ api.add_resource(restapi_list, '/restapi')
 api.add_resource(topoview, '/restapi/topo')
 api.add_resource(device_list, '/restapi/devicelist')
 api.add_resource(device_detail, '/restapi/devicelist/<string:devicename>')
+api.add_resource(delays, '/restapi/delays')
+api.add_resource(delays_ports, '/restapi/delays/<string:devicename>')
 
 if __name__ == '__main__':
     app.run(host = "0.0.0.0" , port = 8180)

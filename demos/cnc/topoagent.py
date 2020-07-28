@@ -10,8 +10,9 @@ import errno
 import asyncio
 import websockets
 
-FIFO_STEP_1 = "get interfaces"
-FIFO_STEP_2 = "get neighbors"
+SERVER_GET_INTERFACES = "get interfaces"
+SERVER_GET_NEIGHBORS = "get neighbors"
+SERVER_GET_DELAY = "get delay"
 async def set_device_name():
     line = subprocess.Popen('ps  aux | grep avahi | grep running', \
                shell = True, stdout= subprocess.PIPE, stderr=subprocess.STDOUT);
@@ -38,14 +39,41 @@ async def get_neighbors():
             shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
     neighbors = pneighbors.stdout.read().decode('utf-8');
     return (neighbors);
- 
+async def get_delay():
+    reply = {};
+    for port in ['swp0', 'swp1', 'swp2', 'swp3']:
+        cmd = "pmc -2 -i %s \"GET PORT_DATA_SET\" | grep peerMeanPathDelay | awk '{print $2}'"%(port)
+        pdelayvalues = subprocess.Popen(cmd, \
+		    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
+        delayvalues = pdelayvalues.stdout.read().decode('utf-8');
+        values = delayvalues.split()
+        if (len(values) == 0):
+            reply[port] = 0;
+            continue;
+
+        cmd = "pmc -2 -i %s \"GET PORT_DATA_SET\" | grep RESPONSE | awk '{print $1}'"%(port)
+        pdelaykeys = subprocess.Popen(cmd, \
+                   shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
+        delaykeys = pdelaykeys.stdout.read().decode('utf-8');
+        keys = delaykeys.split()
+        delaylist = dict(zip(keys, values))
+
+        cmd ="pmc -2 -i %s \"GET USER_DESCRIPTION\" | grep RESPONSE | awk '{print $1}'"%(port)
+        pcurrentkey = subprocess.Popen(cmd, \
+                   shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
+        currentkey = pcurrentkey.stdout.read().decode('utf-8');
+        reply[port]= delaylist[currentkey.split()[0]]
+    return (str(reply))
+
 async def deal_message(websocket, cmd):
 #    cmd = await websocket.recv()
-    if (cmd == FIFO_STEP_1):
+    if (cmd == SERVER_GET_INTERFACES):
         await set_device_name()
         feedback = await get_interfaces()
-    elif (cmd == FIFO_STEP_2):
+    elif (cmd == SERVER_GET_NEIGHBORS):
         feedback = await get_neighbors()
+    elif (cmd == SERVER_GET_DELAY):
+        feedback = await get_delay()
     else:
         print("error command");
         feedback = "{error:-1}";
