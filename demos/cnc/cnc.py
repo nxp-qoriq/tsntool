@@ -8,6 +8,7 @@ from flask import jsonify
 from flask_restful import Api, Resource
 from xml.etree import ElementTree as ET
 from threading import Thread
+from ast import literal_eval
 import json
 import subprocess
 import sys
@@ -685,6 +686,30 @@ def get_device_noneighbor_interfaces():
     else:
         return({devicename:[]})
 
+@app.route('/topology/linkdelay', methods=['GET'])
+def get_ports_delay():
+    global neighbors_for_client;
+    global gdelays;
+    source = request.args.get('source');
+    target = request.args.get('target');
+    portdelay = literal_eval(gdelays[source])
+    print(portdelay)
+    if not neighbors_for_client.__contains__(source):
+        return ({
+            source: "no neighbor found, check lldp is running"
+            })
+
+    print(portdelay[neighbors_for_client[source][0]['local_intf']])
+
+    for onelink in neighbors_for_client[source]:
+        print(onelink)
+        if (onelink["neighbor"] == target):
+            print(portdelay[onelink['local_intf']])
+            return ({source: portdelay[onelink['local_intf']]})
+
+    return ({
+        source:[]
+        })
 
 def get_topology():
     '''
