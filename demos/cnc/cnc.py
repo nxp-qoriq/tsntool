@@ -658,7 +658,7 @@ def getNodesFromNeighborships():
 @app.route('/topology/graph.json',methods=['GET'])
 def get_graph_file():
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
-    json_url = os.path.join(SITE_ROOT, "templates/topology", "graph1.json")
+    json_url = os.path.join(SITE_ROOT, "templates/topology", "graph.json")
     with open(json_url, 'r') as outfile:
         graphjson = json.loads(outfile.read())
         print(graphjson)
