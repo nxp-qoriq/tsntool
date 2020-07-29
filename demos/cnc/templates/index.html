@@ -1,6 +1,25 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <link rel='stylesheet' href="{{ url_for('static', filename='css/style.css') }}" type='text/css' media='all' />
+<head>
+
+ <style type="text/css">
+		.tooltip{
+			font-family:simsun;
+			font-size:16px;
+			width:120;
+			height:auto;
+			position:absolute;
+			text-align:center;
+			border-style:solid;
+			border-width:1px;
+			background-color:white;
+			border-radius:5px;
+		}
+ 
+</style>
+
+</head>
 <body>
 <div style="height:100%;width:10%;float:left;">
 	<p  style="font-size: 30px;cursor : crosshair;">devices list</p>
@@ -16,12 +35,14 @@
       CLICK ON DEVICE FOR NEIGHBOR/INTERFACE INFORMATION
   </div>
   <div class="infobox2" id="infobox2" >
-  </div>  
+  </div>
 </td></tr></table >
 </div>
+
 </body>
 <script src="static/d3.v4.min.js"></script>
 <script src="static/jquery.min.js"></script>
+
 <script>
 
 // =============================
@@ -164,6 +185,31 @@ function printToDivWithID(id,text){
   div.innerHTML = text;
 }
 
+function OnLinkMouseover(source, target, px, py, callback) {
+    $.ajax({
+	type:"GET",
+	url: "/topology/linkdelay",
+	dataType: "json",
+	data: {'source':source, 'target':target},
+	contentType: "application/json; charset=utf-8",
+	success: function (data) {
+		console.log("=============");
+		console.log(data);
+		console.log("=============");
+		//displaylinkdelay(data[source]);
+		value = data[source];
+		callback(data[source], px, py);
+		/*
+		tooltip.html(data[source])
+			.style("left",(d3.event.pageX)+"px")
+			.style("top",(d3.event.pageY+20)+"px")
+			.style("opacity",1.0);
+		*/
+
+	}
+	});
+}
+
 // ########
 // # MAIN #
 // ########
@@ -287,6 +333,12 @@ function checkaddnodes(newnodes) {
 	}
 };
 
+
+
+var tooltip = d3.select("body").append("div")
+		.attr("class","tooltip")
+		.attr("opacity",0.0);
+
 setInterval(function () {
 
 	$.get("topology/graph.json", function(rdata, status) {
@@ -328,6 +380,24 @@ setInterval(function () {
 		.attr("id", function(d){
 				d.source.id + "-" + d.target.id;
 			});
+
+	linkadd.on("mouseover", function(d, i) {
+		//alert(d.source.id)
+		OnLinkMouseover(d.source.id, d.target.id, d3.event.pageX, d3.event.pageY, function(delayvalue, px, py){
+			tooltip.html(delayvalue)
+				.style("left",(px)+"px")
+				.style("top",(py+20)+"px")
+				.style("opacity",1.0);
+
+		});
+		console.log("mouse on line");
+
+	});
+
+	linkadd.on("mouseout", function(d, i){
+		console.log("mouse out");
+		tooltip.style("opacity",0.0);
+	});
 
 	var nodeadd = node.enter().append("g")
 		.attr("class", "nodes")
