@@ -26,6 +26,7 @@
 	<hr />
 	<ul id="devices">	</ul>
 	<hr />
+	<button type="button" id="checkpathBT" onclick="inputTwoDevices();">Check Path</button> 
 </div>
 <div width="90%" float="right">
 <table><tr><td>
@@ -42,8 +43,44 @@
 </body>
 <script src="static/d3.v4.min.js"></script>
 <script src="static/jquery.min.js"></script>
-
 <script>
+var focusinput = undefined;
+
+var formshow = '<form id="formGetPath"> \
+	First Device:<br> \
+	<input type="text" id="firstname" name="firstname" value=""> \
+	<br> \
+	Second Device:<br> \
+	<input type="text" id="secondname" name="secondname" value=""> \
+	<br><br> \
+	<input type="button" id="summit" value="Submit" onclick="getpath()"> \
+	</form>';
+
+function inputTwoDevices() {
+	$("#checkpathBT").after(formshow);
+
+        $("#firstname").focus(function(){
+		focusinput = "#firstname";
+		console.log(focusinput);
+        });
+        $("#firstname").blur(function(){
+		console.log(focusinput);
+        });
+        $("#secondname").focus(function(){
+		focusinput = "#secondname";
+		console.log(focusinput);
+        });
+        $("#secondname").blur(function(){
+		console.log(focusinput);
+        });
+
+}
+
+function getpath() {
+	console.log("getpath form summit button pressed");
+	$("#formGetPath").remove();
+	focusinput = undefined;
+}
 
 // =============================
 // PRINTING DEVICE DETAILS TABLE
@@ -68,6 +105,11 @@ function OnClickDetails(deviceid){
   //alert("devicedetails: " + deviceid);
   //usage:
 
+	var $focused = $(':focus');
+	if (focusinput != undefined) {
+		console.log($(focusinput));
+		$(focusinput).val(deviceid);
+	}
   // #############################
   // # READING NEIGHBORS         #
   // #############################
@@ -396,7 +438,9 @@ setInterval(function () {
 
 	linkadd.on("mouseout", function(d, i){
 		console.log("mouse out");
-		tooltip.style("opacity",0.0);
+		tooltip.style("opacity",0.0)
+			.transition()
+			.duration(500);
 	});
 
 	var nodeadd = node.enter().append("g")
