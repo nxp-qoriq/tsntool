@@ -655,6 +655,15 @@ def getNodesFromNeighborships():
 
     return(nodes)
 
+#TODO: to finished the algorithm
+def get_route_path(source, target):
+    return ({
+        'path' : [
+            {source:'swp1'},
+            {target: 'swp0'}
+            ]
+            })
+
 @app.route('/topology/graph.json',methods=['GET'])
 def get_graph_file():
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
@@ -710,6 +719,15 @@ def get_ports_delay():
     return ({
         source:[]
         })
+
+@app.route('/topology/getpath', methods=['GET'])
+def front_get_path():
+    global neighbors_for_client;
+    global gdelays;
+    source = request.args.get('source');
+    target = request.args.get('target');
+    path = get_route_path(source, target);
+    return (path);
 
 def get_topology():
     '''
@@ -804,7 +822,8 @@ REST_APIs = {
         '/restapi/devicelist' : "get devices list",
         '/restapi/devicelist/<devicename>' : "get one device interfaces",
 	'/restapi/delays' : "get ports delay",
-	'/restapi/delays/<devicename>' : "get one device ports delay"
+	'/restapi/delays/<devicename>' : "get one device ports delay",
+        '/restapi/getpath/<source>-<target>' : "get path between two devices"
         }
 
 class restapi_list(Resource):
@@ -854,6 +873,16 @@ class delays_ports(Resource):
             return {'code': 404, 'msg': 'failure, no such device', 'data':{}}
         return {'code': 200, 'msg': 'success', 'data':gdelays[devicename]}
 
+class get_path(Resource):
+    def get(self, source, target):
+        path = get_route_path(source, target);
+        print("--getting path: %s - %s"%(source, target));
+        return {
+                'code' : 200,
+                'msg' : 'success',
+                'data' : path
+                }
+
 try:
    t_probeboards = threading.Thread(target=probe_boards, args=(5,))
    t_probeboards.start()
@@ -868,6 +897,7 @@ api.add_resource(device_list, '/restapi/devicelist')
 api.add_resource(device_detail, '/restapi/devicelist/<string:devicename>')
 api.add_resource(delays, '/restapi/delays')
 api.add_resource(delays_ports, '/restapi/delays/<string:devicename>')
+api.add_resource(get_path, '/restapi/getpath/<string:source>,<string:target>')
 
 if __name__ == '__main__':
     app.run(host = "0.0.0.0" , port = 8180)

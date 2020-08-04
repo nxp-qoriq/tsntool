@@ -78,6 +78,21 @@ function inputTwoDevices() {
 
 function getpath() {
 	console.log("getpath form summit button pressed");
+	source = $("#firstname").val();
+	target = $("#secondname").val();
+    $.ajax({
+	type:"GET",
+	url: "/topology/getpath",
+	dataType: "json",
+	data: {'source':source, 'target':target},
+	contentType: "application/json; charset=utf-8",
+	success: function (data) {
+		console.log("========GET PATH=====");
+		console.log(data);
+		console.log("=====================");
+
+	}
+	});
 	$("#formGetPath").remove();
 	focusinput = undefined;
 }
