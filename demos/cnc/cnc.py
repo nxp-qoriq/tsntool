@@ -680,10 +680,13 @@ def path_get_value(dict_a, path, value):
         if (v != {}):
             path.append(k);
             path_get_value(v, path, value);
+            if (value == k):
+                ret_path = path.copy();
             path.remove(k);
         else:
             if (value == k):
                 path.append(k)
+                print("got path: {}".format(path));
                 ret_path = path.copy();
 
 def get_route_path(source, target):
