@@ -80,6 +80,11 @@ function getpath() {
 	console.log("getpath form summit button pressed");
 	source = $("#firstname").val();
 	target = $("#secondname").val();
+	if (source.length == 0 || target.length == 0) {
+		alert("select source and target");
+		return;
+	}
+
     $.ajax({
 	type:"GET",
 	url: "/topology/getpath",
@@ -89,8 +94,9 @@ function getpath() {
 	success: function (data) {
 		console.log("========GET PATH=====");
 		console.log(data);
+		console.log(data.path);
+		alert(JSON.stringify(data.path));
 		console.log("=====================");
-
 	}
 	});
 	$("#formGetPath").remove();

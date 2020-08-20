@@ -655,13 +655,57 @@ def getNodesFromNeighborships():
 
     return(nodes)
 
-#TODO: to finished the algorithm
+
+def restructure(list_a, dict_c,  whole, current):
+    for link in list_a:
+        if (link['source'] == current):
+            if (link['target'] not in whole):
+                whole.append(link['target']);
+                dict_c[link['target']] = {
+
+                        };
+                restructure(list_a, dict_c[link['target']], whole, link['target']);
+        elif (link['target'] == current):
+            if (link['source'] not in whole):
+                whole.append(link['source']);
+                dict_c[link['source']] = {
+
+                        };
+                restructure(list_a, dict_c[link['source']], whole, link['source']);
+
+ret_path = list();
+def path_get_value(dict_a, path, value):
+    global ret_path;
+    for k, v in dict_a.items():
+        if (v != {}):
+            path.append(k);
+            path_get_value(v, path, value);
+            path.remove(k);
+        else:
+            if (value == k):
+                path.append(k)
+                ret_path = path.copy();
+
 def get_route_path(source, target):
+    adict = {};
+    adict[source] = {};
+    whole = list();
+    whole.append(source);
+    SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
+    json_url = os.path.join(SITE_ROOT, "templates/topology", "graph.json")
+    with open(json_url, 'r') as outfile:
+        graph = json.loads(outfile.read())
+        print(graph)
+        restructure(graph['links'], adict[source] , whole, source)
+
+    print(whole)
+    print(adict)
+
+    path_get_value(adict, [], target);
+    print("PATH:========={}================".format(ret_path))
+    print(str(ret_path))
     return ({
-        'path' : [
-            {source:'swp1'},
-            {target: 'swp0'}
-            ]
+            'path' : str(ret_path)
             })
 
 @app.route('/topology/graph.json',methods=['GET'])
@@ -727,7 +771,7 @@ def front_get_path():
     source = request.args.get('source');
     target = request.args.get('target');
     path = get_route_path(source, target);
-    return (path);
+    return (jsonify(path));
 
 def get_topology():
     '''
