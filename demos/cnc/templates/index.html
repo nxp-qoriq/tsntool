@@ -74,9 +74,16 @@ function inputTwoDevices() {
 		console.log(focusinput);
         });
 
+	//for (var m in oldgraph.links) {
+	//	oldgraph.links[m].value = pathlist[m];
+	//}
+
 }
 
+var pathlist = new Array();
+
 function getpath() {
+	pathlist = [];
 	console.log("getpath form summit button pressed");
 	source = $("#firstname").val();
 	target = $("#secondname").val();
@@ -93,9 +100,30 @@ function getpath() {
 	contentType: "application/json; charset=utf-8",
 	success: function (data) {
 		console.log("========GET PATH=====");
-		console.log(data);
-		console.log(data.path);
-		alert(JSON.stringify(data.path));
+		pathd = data.path.substring(1, data.path.length -1);
+		console.log(pathd);
+		pathing = pathd.split(",");
+		if (pathing.length == 0)
+			return;
+		for (var j in pathing){
+			console.log(pathing[j]);
+			var ret = $.trim(pathing[j]);
+			pathing[j] = ret.substring(1, ret.length -1);
+		}
+		for (var i = 0; i < (pathing.length - 1); i++) {
+			for (var k in oldgraph.links) {
+				//pathlist.push(oldgraph.links[k].value);
+				if ((oldgraph.links[k].source.id == pathing[i] &&
+				     oldgraph.links[k].target.id == pathing[i + 1]) ||
+				    (oldgraph.links[k].source.id == pathing[i + 1] &&
+				     oldgraph.links[k].target.id == pathing[i])) {
+					oldgraph.links[k].value = 30;
+				}
+			}
+
+		}
+		console.log(pathlist);
+		//alert(JSON.stringify(data.path));
 		console.log("=====================");
 	}
 	});
