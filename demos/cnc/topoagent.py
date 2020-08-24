@@ -62,7 +62,10 @@ async def get_delay():
         pcurrentkey = subprocess.Popen(cmd, \
                    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
         currentkey = pcurrentkey.stdout.read().decode('utf-8');
-        reply[port]= delaylist[currentkey.split()[0]]
+        if currentkey == "":
+            reply[port] = 0;
+        else:
+            reply[port]= delaylist[currentkey.split()[0]]
     return (str(reply))
 
 async def deal_message(websocket, cmd):
@@ -79,7 +82,7 @@ async def deal_message(websocket, cmd):
         feedback = "{error:-1}";
 
     await websocket.send(feedback)
-    print(f"{feedback}")
+#    print(f"{feedback}")
 
 
 async def remotecall(websocket, path):
