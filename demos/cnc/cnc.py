@@ -20,6 +20,7 @@ import asyncio
 import websockets
 import pprint
 import os
+from copy import deepcopy
 
 def removeknowhost():
 	print("remove /root/.ssh/known_hosts");
@@ -520,7 +521,9 @@ def configp8021cbHTML():
 
 devices = {}
 ginterfaces = {}
+ginterfaces_back = {}
 gneighbors = {}
+gneighbors_back = {}
 gdelays = {}
 
 WS_CMD_INTERFACES = "get interfaces"
@@ -591,14 +594,14 @@ interfaces_for_client = {};
 
 def getLinksFromNeighborships():
     print("getLinksFromNeighborships")
-    global gneighbors
+    global gneighbors_back
     global neighbors_for_client;
     links = {'links':[]}
     neighbors_client = { };
 
-    if not gneighbors:
+    if not gneighbors_back:
         return (links);
-    for key,value in gneighbors.items():
+    for key,value in gneighbors_back.items():
         if not value['lldp'][0]:
             continue;
         neighbors_client[key] = [];
@@ -616,15 +619,15 @@ def getLinksFromNeighborships():
 
 def getNodesFromNeighborships():
     print("getNodesFromNeighborships:")
-    global ginterfaces
-    global gneighbors
+    global ginterfaces_back
+    global gneighbors_back
     global interfaces_for_client
     nodes = {'nodes':[]}
     bridges_list = []
     interfaces_client = {}
-    if not ginterfaces:
+    if not ginterfaces_back:
         return (nodes)
-    for key,value in ginterfaces.items():
+    for key,value in ginterfaces_back.items():
         candidate = {"id":key,"group":2}
         nodes['nodes'].append(candidate)
         bridges_list.append(key);
@@ -641,9 +644,9 @@ def getNodesFromNeighborships():
 
     interfaces_for_client = interfaces_client;
 
-    if not gneighbors:
+    if not gneighbors_back:
         return (nodes);
-    for key,value in gneighbors.items():
+    for key,value in gneighbors_back.items():
         if not value['lldp'][0]:
             continue;
         for interface in value['lldp'][0]['interface']:
@@ -806,6 +809,8 @@ def get_topology():
 
 def probe_boards(n):
     global devices
+    global gneighbors_back;
+    global ginterfaces_back;
     while True:
         devices_temp = {}
         output = subprocess.Popen('avahi-browse -a -d local -t | grep OpenIL', \
@@ -838,6 +843,11 @@ def probe_boards(n):
         pprint.pprint(ginterfaces.keys())
         print("==========================")
         get_topology()
+
+        ginterfaces_back = {};
+        ginterfaces_back = deepcopy(ginterfaces);
+        gneighbors_back = {};
+        gneighbors_back = deepcopy(gneighbors);
 
         ginterfaces.clear()
         gneighbors.clear()
