@@ -34,14 +34,26 @@ async def get_interfaces():
     interfaces = pinterfaces.stdout.read().decode('utf-8');
     return (interfaces);
 
+glinks = [];
 async def get_neighbors():
+    global glinks;
     pneighbors = subprocess.Popen('lldpcli -d show -f json neighbors ports swp0,swp1,swp2,swp3 details', \
             shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
     neighbors = pneighbors.stdout.read().decode('utf-8');
+    dneighbors = json.loads(neighbors);
+    if not dneighbors['lldp'][0]:
+        return (neighbors);
+
+    glinks.clear();
+    for interface in dneighbors['lldp'][0]['interface']:
+        print(interface["name"]);
+        glinks.append(interface["name"]);
+
+    print(glinks);
     return (neighbors);
 async def get_delay():
     reply = {};
-    for port in ['swp0', 'swp1', 'swp2', 'swp3']:
+    for port in glinks:
         cmd = "pmc -2 -i %s \"GET PORT_DATA_SET\" | grep peerMeanPathDelay | awk '{print $2}'"%(port)
         pdelayvalues = subprocess.Popen(cmd, \
 		    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
