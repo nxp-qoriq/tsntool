@@ -823,12 +823,16 @@ def probe_boards(n):
             if (devices_list[4] != 'SSH') and (devices_list[4] != 'ssh._tcp') :
                 continue
             board = '%s.local'%(devices_list[3])
-            result = subprocess.Popen('avahi-resolve-host-name %s' %(board), \
-                    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT)
+            resulte_list = [];
+            while True:
+                result = subprocess.Popen('avahi-resolve-host-name %s' %(board), \
+                        shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT)
 
-            resultb = result.stdout.readline()
-            resulte_txt = resultb.decode("utf-8")
-            resulte_list = resulte_txt.split()
+                resultb = result.stdout.readline()
+                resulte_txt = resultb.decode("utf-8")
+                resulte_list = resulte_txt.split()
+                if (len(resulte_list[1]) < 18):
+                    break;
             if (resulte_list[0] == 'Failed') :
                 continue
             if (devices_temp.__contains__(resulte_list[0])) :
