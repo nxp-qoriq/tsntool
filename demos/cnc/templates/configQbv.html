@@ -99,17 +99,12 @@ this.splice(index, 1);
 </head>
 <body>
 <script>
-var portname = 'eno0';
+var portname = window.parent.deviceport;
 var gatelist = [0];
 var index = 0;
 var enable = 'true';
-
-function choosport()
-{
-	var checkValue = $("#portselect").val();
-	portname = checkValue;
-}
-
+console.log("setting =================");
+console.log(portname);
 function selectenable()
 {
 	var radioVal = $('input:radio[name="enable"]:checked').val();
@@ -156,7 +151,7 @@ function confirmset()
 
 	console.log(deviceself, deviceself['devicename']);
 	qbvadmin["device"] = deviceself['deviceip'];
-	qbvadmin["port"] = $("#portselect").val();
+	qbvadmin["port"] = portname;//$("#portselect").val();
 	var basetime = $("input[name='basetime']").val();
 	if (basetime != '') {
 		qbvadmin["basetime"] = basetime;
@@ -215,16 +210,7 @@ function confirmset()
 <div>
 <form>
 <b>*device:
-<select class="button device" id="portselect" name="portselect" onchange="choosport()">
-	<option value="eno0" selected>eno0</option>
-	<option value="eno2">eno2</option>
-	<option value="eno3">eno3</option>
-	<option value="swp0">swp0</option>
-	<option value="swp1">swp1</option>
-	<option value="swp2">swp2</option>
-	<option value="swp3">swp3</option>
-	<option value="swp4">swp4</option>
- </select>
+
 <br><br>
 <input class="button addlist" type="radio" name="enable" value="true" onclick="selectenable()" checked="checked">enable
 <input class="button addlist" type="radio" name="enable" value="false" onclick="selectenable()">disable

@@ -366,7 +366,7 @@ var fmiconf = '<div id="fmiconf"><br>&nbsp;&nbsp;'+
 </head>
 <body>
 <script>
-var portname = 'eno0';
+var portname = window.parent.deviceport;
 var gatelist = [0];
 var index = 0;
 var enable = 'true';
@@ -374,12 +374,6 @@ var typetagged = 'all';
 var currentpage = 'sid';
 var fmioptions = {cf: false, cm: false, dropyellow: false, markred:false};
 var initgate = 'open';
-
-function choosport()
-{
-	var checkValue = $("#portselect").val();
-	portname = checkValue;
-}
 
 function selectenable()
 {
@@ -519,7 +513,7 @@ function loadsid()
 	var deviceself = window.parent.formgetnameip();
 
 	qcisid["device"] = deviceself['deviceip'];
-	qcisid["port"] = $("#portselect").val();
+	qcisid["port"] = portname;//$("#portselect").val();
 	qcisid["index"] = $("#index").val();
 	if (qcisid["index"] == "") {
 		alert("Please input index value");
@@ -559,7 +553,7 @@ function loadsfi()
 	var deviceself = window.parent.formgetnameip();
 
 	qcisfi["device"] = deviceself['deviceip'];
-	qcisfi["port"] = $("#portselect").val();
+	qcisfi["port"] = portname; //$("#portselect").val();
 	qcisfi["index"] = $("#index").val();
 	if (qcisfi["index"] == "") {
 		alert("Please input index value");
@@ -598,7 +592,7 @@ function loadsgi()
 	var deviceself = window.parent.formgetnameip();
 
 	qcisgi["device"] = deviceself['deviceip'];
-	qcisgi["port"] = $("#portselect").val();
+	qcisgi["port"] = portname; //$("#portselect").val();
 	qcisgi["index"] = $("#index").val();
 	if (qcisgi["index"] == "") {
 		alert("Please input index value");
@@ -661,7 +655,7 @@ function loadfmi()
 	var deviceself = window.parent.formgetnameip();
 
 	qcifmi["device"] = deviceself['deviceip'];
-	qcifmi["port"] = $("#portselect").val();
+	qcifmi["port"] = portname; //$("#portselect").val();
 	qcifmi["index"] = $("#index").val();
 	if (qcifmi["index"] == "") {
 		alert("Please input index value");
@@ -712,16 +706,7 @@ function confirmset()
 <div>
 <form>
 <b>*device:
-<select class="button device" id="portselect" name="portselect" onchange="choosport()">
-	<option value="eno0" selected>eno0</option>
-	<option value="eno2">eno2</option>
-	<option value="eno3">eno3</option>
-	<option value="swp0">swp0</option>
-	<option value="swp1">swp1</option>
-	<option value="swp2">swp2</option>
-	<option value="swp3">swp3</option>
-	<option value="swp4">swp4</option>
- </select>
+
 <br><br>
 <select class="button confsection" id="selectsection" name="selectsection" onchange="selectpart()">
 	<option value="sid" selected>stream identify</option>

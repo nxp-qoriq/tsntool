@@ -21,14 +21,8 @@
 
 </head>
 <body>
-<div style="height:100%;width:10%;float:left;">
-	<p  style="font-size: 30px;cursor : crosshair;">devices list</p>
-	<hr />
-	<ul id="devices">	</ul>
-	<hr />
-	<button type="button" id="checkpathBT" onclick="inputTwoDevices();">Check Path</button> 
-</div>
-<div width="90%" float="right">
+
+<div width="100%">
 <table><tr><td>
   <svg width="100%" height="100%"></svg>
 </td><td>
@@ -37,13 +31,22 @@
   </div>
   <div class="infobox2" id="infobox2" >
   </div>
+  <div>
+	<button type="button" id="checkpathBT" onclick="inputTwoDevices();">Check Path</button>
+  </div>
 </td></tr></table >
 </div>
 
 </body>
 <script src="static/d3.v4.min.js"></script>
 <script src="static/jquery.min.js"></script>
+
 <script>
+function LoadconfigdeviceHTML(n, i, p)
+{
+	window.location.replace('/configdeviceHTML?name='+n+'&ip='+i+'&port='+p);
+}
+
 var focusinput = undefined;
 
 var formshow = '<form id="formGetPath"> \
@@ -253,8 +256,9 @@ function tableFromNeighbor(key,data){
   for (var neighbor in data[key]) {
     text+= "<tr>";
 
-    console.log("local_intf:" + data[key][neighbor]['local_intf']);
-    text+= "<td>" + data[key][neighbor]['local_intf'] + "</td>";
+    var localport = data[key][neighbor]['local_intf'];
+    console.log("local_intf:" + localport);
+    text+= "<td><a href=\"javascript:LoadconfigdeviceHTML('"+key+"','"+devices[key]+"','"+localport+"');\">" + localport + "</a></td>";
     console.log("neighbor_intf:" + data[key][neighbor]['neighbor_intf']);
     text+= "<td>" + data[key][neighbor]['neighbor'] + "</td>";
     console.log("neighbor:" + data[key][neighbor]['neighbor']);
@@ -363,7 +367,7 @@ function checkaddlinks(newlinks) {
 				break;
 			}
 		}
-		console.log(j);
+		//console.log(j);
 		if (find === 0) {
 			oldgraph.links.push(newlinks[i]);
 		} else {
@@ -430,7 +434,18 @@ var tooltip = d3.select("body").append("div")
 		.attr("class","tooltip")
 		.attr("opacity",0.0);
 
+var devices = new Array();
+
 setInterval(function () {
+	$.get("/getdevices", function(data, status) {
+				console.log("-----------------");
+				console.log(devices);
+				devices = {};
+				$.each(data, function(i, field){
+					//console.log(field);
+					devices[field.name] =  field.ip;
+				});
+	});
 
 	$.get("topology/graph.json", function(rdata, status) {
 	var rgraph = {
@@ -571,7 +586,7 @@ function dragended(d) {
 </script>
 
 <script>
- /* Jump to new page */
+/*
   function LoadconfigdeviceHTML(n, i)
   {
 	window.location.replace('/configdeviceHTML?name='+n+'&ip='+i);
@@ -593,5 +608,7 @@ setInterval(function () {
 				});
 			}); 
 }, 2000);
+
+*/
 </script>
 

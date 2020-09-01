@@ -96,12 +96,15 @@
 var counter = 0;
 var devicename;
 var deviceip;
+var deviceport;
 	function getnameip() {
 		var devname = getUrlParam("name");
 		var devip = getUrlParam("ip");
-		var header =  "<h1 style=\"margin-bottom:0;\">SETTING "+devname+" : "+devip+"</h1>";
+		var devport = getUrlParam("port");
+		var header =  "<h1 style=\"margin-bottom:0;\">SETTING "+devname+" : "+devip+" : "+devport+"</h1>";
 		devicename = devname;
 		deviceip = devip;
+		deviceport = devport;
 		document.getElementById("container").innerHTML = header; 
 	}
 
@@ -215,7 +218,7 @@ function addtsnset() {
 	$('#configframe').after('&nbsp;&nbsp;<button id="configcancle" onclick="aconfigremove();" \
 				type="button" class="button configcancle">cancel</button>');
 	$('#configcancle').after('</div>');
-	window.configframe.location.href = "/configQbvHTML?name="+devicename+"&ip="+deviceip;
+	window.configframe.location.href = "/configQbvHTML?name="+devicename+"&ip="+deviceip+"&port"+deviceport;
 }
 
 function getconfig() {
