@@ -720,7 +720,7 @@ def get_graph_file():
     json_url = os.path.join(SITE_ROOT, "templates/topology", "graph.json")
     with open(json_url, 'r') as outfile:
         graphjson = json.loads(outfile.read())
-        print(graphjson)
+#        print(graphjson)
         return (graphjson)
 
 @app.route('/topology/neighborships.json',methods=['GET'])
@@ -739,7 +739,7 @@ def get_device_neighbors():
 def get_device_noneighbor_interfaces():
     devicename = request.args.get('device');
     print(devicename)
-    print(interfaces_for_client)
+#    print(interfaces_for_client)
     if (interfaces_for_client.__contains__(devicename)):
         return ({devicename:interfaces_for_client[devicename]})
     else:
