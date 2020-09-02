@@ -9,6 +9,7 @@ import os
 import errno
 import asyncio
 import websockets
+import time
 
 SERVER_GET_INTERFACES = "get interfaces"
 SERVER_GET_NEIGHBORS = "get neighbors"
@@ -54,16 +55,32 @@ async def get_neighbors():
 async def get_delay():
     reply = {};
     for port in glinks:
-        cmd = "pmc -2 -i %s \"GET PORT_DATA_SET\" | grep peerMeanPathDelay | awk '{print $2}'"%(port)
+        cmd = "pmc -2 -i %s \"GET PORT_DATA_SET\""%(port)
         pdelayvalues = subprocess.Popen(cmd, \
 		    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
-        delayvalues = pdelayvalues.stdout.read().decode('utf-8');
+        pmcpid = pdelayvalues.pid;
+        cmd = "grep peerMeanPathDelay";
+        pchild1 = subprocess.Popen(cmd, stdin= pdelayvalues.stdout, \
+                shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
+        cmd = "awk '{print $2}'"
+        pchild2 = subprocess.Popen(cmd, stdin= pchild1.stdout, \
+                shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
+        if (pdelayvalues.poll() == None):
+            time.sleep(0.2);
+            if (pdelayvalues.poll() == None):
+                pdelayvalues.terminate();
+                reply[port] = 0;
+                continue;
+
+        delayvalues = pchild2.stdout.read().decode('utf-8');
+        print('delay:', delayvalues)
         values = delayvalues.split()
         if (len(values) == 0):
             reply[port] = 0;
             continue;
 
         cmd = "pmc -2 -i %s \"GET PORT_DATA_SET\" | grep RESPONSE | awk '{print $1}'"%(port)
+
         pdelaykeys = subprocess.Popen(cmd, \
                    shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
         delaykeys = pdelaykeys.stdout.read().decode('utf-8');
