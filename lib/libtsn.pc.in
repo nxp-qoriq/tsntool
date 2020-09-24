@@ -4,6 +4,6 @@ includedir=@includedir@
 Name: tsn
 Description: libtsn for NXP LS1028A
 Version: @version@
-Requires: libnl-3.0 libnl-genl-3.0 libcjson readline
+Requires: libnl-3.0 libnl-genl-3.0 libcjson
 Libs: -L${libdir} -ltsn
 Cflags: -I${includedir}/tsn

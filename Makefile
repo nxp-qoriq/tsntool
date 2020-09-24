@@ -77,6 +77,7 @@ install: include/tsn/genl_tsn.h $(TSN_LIB) $(TSN_BIN) $(TSN_LIB_PC)
 	install -m 0755 $(TSN_BIN) $(DESTDIR)$(BINDIR)/
 	install -m 0644 $(TSN_LIB) $(DESTDIR)$(LIBDIR)/
 	install -m 0644 include/tsn/genl_tsn.h $(DESTDIR)$(INCLUDEDIR)/tsn
+	install -D -m 644 include/linux/tsn.h $(DESTDIR)$(INCLUDEDIR)/linux/
 	install -D -m 644 $(TSN_LIB_PC) $(DESTDIR)$(LIBDIR)/pkgconfig/libtsn.pc
 
 clean:
