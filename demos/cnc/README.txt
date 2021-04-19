@@ -49,7 +49,12 @@ BR2_PACKAGE_AVAHI_LIBDNSSD_COMPATIBILITY=y
 BR2_PACKAGE_NSS_MDNS=y
 BR2_PACKAGE_NETOPEER=y
 
-RUN:
+In version 2, additional packages:
+- python3 supporting subprocess/asyncio/json/websockets modules.
+
+- lldpd commit point:
+ b877664dec7ef854f7f7f893b9c8906aaff8f369
+
 ----
 Client devices run:
 lldpd -I swp0,swp1,swp2,swp3
