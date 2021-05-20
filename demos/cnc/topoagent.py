@@ -38,7 +38,7 @@ async def get_interfaces():
 glinks = [];
 async def get_neighbors():
     global glinks;
-    pneighbors = subprocess.Popen('lldpcli -d show -f json neighbors ports swp0,swp1,swp2,swp3 details', \
+    pneighbors = subprocess.Popen('lldpcli -d show -f json0 neighbors ports swp0,swp1,swp2,swp3 details', \
             shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
     neighbors = pneighbors.stdout.read().decode('utf-8');
     dneighbors = json.loads(neighbors);
