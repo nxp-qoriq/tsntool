@@ -22,6 +22,8 @@ import pprint
 import os
 from copy import deepcopy
 
+GROUP_NAME="rt-edge"
+
 def removeknowhost():
 	print("remove /root/.ssh/known_hosts");
 	subprocess.call(["rm", "-f", '/root/.ssh/known_hosts']);
@@ -813,7 +815,7 @@ def probe_boards(n):
     global ginterfaces_back;
     while True:
         devices_temp = {}
-        output = subprocess.Popen('avahi-browse -a -d local -t | grep OpenIL', \
+        output = subprocess.Popen("avahi-browse -a -d local -t | grep {}".format(GROUP_NAME), \
                 shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT)
 
         i = 0
@@ -943,6 +945,11 @@ class get_path(Resource):
                 'msg' : 'success',
                 'data' : path
                 }
+
+if (len(sys.argv) > 1):
+       GROUP_NAME = sys.argv[1]
+
+print("Group Name : %s"%(GROUP_NAME))
 
 try:
    t_probeboards = threading.Thread(target=probe_boards, args=(5,))
