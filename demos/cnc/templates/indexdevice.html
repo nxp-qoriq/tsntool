@@ -184,6 +184,12 @@ function reselect()
 		case 'qbv':
 			window.configframe.location.href = "/configQbvHTML?name="+devicename+"&ip="+deviceip;
 			break;
+		case 'cbgen':
+                        window.configframe.location.href = "/configcbgenHTML?name="+devicename+"&ip="+deviceip;
+                        break;
+		case 'cbrec':
+                        window.configframe.location.href = "/configcbrecHTML?name="+devicename+"&ip="+deviceip;
+                        break;
 		case 'qci':
 			window.configframe.location.href = "/configQciHTML?name="+devicename+"&ip="+deviceip;
 			break;
@@ -207,6 +213,8 @@ function addtsnset() {
 			<select class=\"button\" id=\"tsnprotocol\" name=\"tsnprotocol\" onchange=\"reselect()\"> \
 			<option value=\"qbv\" selected>qbv</option> \
 			<option value=\"qci\">qci</option> \
+			<option value=\"cbgen\">cbgen</option> \
+			<option value=\"cbrec\">cbrec</option> \
 			<option value=\"qbu\">qbu</option> \
 			<option value=\"qav\">qav</option> \
 			<option value=\"p8021cb\">p8021cb</option> \
