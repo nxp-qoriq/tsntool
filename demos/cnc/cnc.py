@@ -135,6 +135,128 @@ def loadnetconfqbv(configdata):
 
     return loadNetconf(qbvxmlstr, configdata['device']);
 
+def loadstream_handle(configdata):
+    print(configdata);
+    counts = 0
+    bridges = ET.Element('bridges');
+    bridges.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge");
+    bridges.set('xmlns:stream', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-stream-id");
+
+    bridge = ET.SubElement(bridges, 'bridge');
+    name = ET.SubElement(bridge, 'name');
+    name.text = 'switch';
+    address = ET.SubElement(bridge, 'address');
+    address.text = 'd6-ad-62-c5-49-ae'
+
+    bridgetype = ET.SubElement(bridge, 'bridge-type');
+    bridgetype.text = 'provider-bridge'
+    component = ET.SubElement(bridge, 'component');
+    name_ = ET.SubElement(component, 'name');
+    name_.text = configdata['port_name'];
+    type_ = ET.SubElement(component, 'type');
+    type_.text = 'edge-relay-component';
+    streams = ET.SubElement(component, 'stream:streams');
+
+    while counts < 4:
+        streamidentitytable = ET.SubElement(streams, 'stream:stream-identity-table');
+        index = ET.SubElement(streamidentitytable, 'stream:index');
+        index.text = str(counts)
+        streamidenabled = ET.SubElement(streamidentitytable, 'stream:stream-id-enabled');
+        streamidenabled.text = 'true'
+        streamhandle = ET.SubElement(streamidentitytable, 'stream:stream-handle');
+        streamhandle.text = str(counts)
+        identificationtype = ET.SubElement(streamidentitytable, 'stream:identification-type');
+        identificationtype.text = 'null'
+        counts += 1
+
+    prettyXml(bridges);
+    streamxmlb = ET.tostring(bridges, encoding='utf8', method='xml');
+    streamxmlstr = str(streamxmlb, encoding='utf-8');
+    print(configdata['device'])
+    return loadNetconf(streamxmlstr, configdata['device']);
+
+def loadport(configdata):
+    print(configdata);
+    interfaces = ET.Element('interfaces');
+    interfaces.set('xmlns', 'urn:ietf:params:xml:ns:yang:ietf-interfaces');
+    interfaces.set('xmlns:preempt', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-preemption');
+    interfaces.set('xmlns:ianaift', 'urn:ietf:params:xml:ns:yang:iana-if-type');
+
+    interface = ET.SubElement(interfaces, 'interface');
+    name = ET.SubElement(interface, 'name');
+    name.text = configdata['port_name']
+    enable = ET.SubElement(interface, 'enabled');
+    enable.text =  'true';
+    type = ET.SubElement(interface, 'type');
+    type.text = 'ianaift:ethernetCsmacd';
+	
+    prettyXml(interfaces);
+    portxmlb = ET.tostring(interfaces, encoding='utf8', method='xml');
+    portxmlstr = str(portxmlb, encoding='utf-8');
+    print(configdata['device'])
+    return loadNetconf(portxmlstr, configdata['device']);
+
+def loadnetconfcbgen(configdata):
+    print(configdata);
+    counts = 0
+    list_ = configdata["portlist"]
+    frame = ET.Element('frame-replication-and-elimination');
+    frame.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1cb-frer");
+
+    sequence = ET.SubElement(frame, 'sequence-generation-list');
+    index = ET.SubElement(sequence, 'index');
+    index.text = configdata['index'];
+
+    sequence = ET.SubElement(frame, 'sequence-identification-list');
+    port = ET.SubElement(sequence, 'port');
+    port.text = configdata['port_name'];
+    direction = ET.SubElement(sequence, 'direction');
+    direction.text = 'true';
+
+    stream = ET.SubElement(frame, 'stream-split-list');
+    port = ET.SubElement(stream, 'port');
+    port.text = configdata['port_name'];
+    direction = ET.SubElement(stream, 'direction');
+    direction.text = 'true';
+
+    while counts < 4:
+        if list_[counts] == "in":
+            input_ = ET.SubElement(stream, 'input-id-list');
+            input_.text = str(counts);
+        counts += 1
+
+    counts = 0
+    while counts < 4:
+        if list_[counts] == "out":
+            output = ET.SubElement(stream, 'output-id-list');
+            output.text = str(counts);
+        counts += 1
+
+    prettyXml(frame);
+    cbgenxmlb = ET.tostring(frame, encoding='utf8', method='xml');
+    cbgenxmlstr = str(cbgenxmlb, encoding='utf-8');
+    print(configdata['device'])
+    return loadNetconf(cbgenxmlstr, configdata['device']);
+
+def loadnetconfcbrec(configdata):
+    print(configdata);
+    frame = ET.Element('frame-replication-and-elimination');
+    frame.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1cb-frer");
+
+    reclist = ET.SubElement(frame, 'sequence-recovery-list');
+    index = ET.SubElement(reclist, 'index');
+    index.text = configdata['index']
+    hislen = ET.SubElement(reclist, 'history-length');
+    hislen.text = configdata['hislen']
+    portlist = ET.SubElement(reclist, 'port-list');
+    portlist.text = configdata['port_name']
+
+    prettyXml(frame);
+    cbrecxmlb = ET.tostring(frame, encoding='utf8', method='xml');
+    cbrecxmlstr = str(cbrecxmlb, encoding='utf-8');
+    print(configdata['device'])
+    return loadNetconf(cbrecxmlstr, configdata['device']);
+
 def loadnetconfqbu(configdata):
     print(configdata);
     interfaces = ET.Element('interfaces');
@@ -395,7 +517,6 @@ def loadncqciset(configdata):
 
     comptype = ET.SubElement(component, 'type');
     comptype.text = 'edge-relay-component';
-
     if (configdata['whichpart'] == 'sfi'):
         createsfixml(component, configdata);
     elif (configdata['whichpart'] == 'sgi'):
@@ -456,6 +577,37 @@ def qbvset():
        raise exceptions.WrongParametersException
     return jsonify({"status": status, "getconfig":str(ret)});
 
+@app.route('/cbgenset',  methods=['POST'])
+def cbgen():
+    try:
+       tojson = request.get_json();
+       status, ret = loadport(tojson);
+       print("loadport status: (%s)" %(status))
+       status, ret = loadstream_handle(tojson);
+       print("loadstream_handle status: (%s)" %(status))
+       status, ret = loadnetconfcbgen(tojson);
+       print (ret);
+    except Exception:
+       status = 'false';
+       return jsonify({"status": status, "getconfig": ''});
+       raise exceptions.WrongParametersException
+    return jsonify({"status": status, "getconfig":str(ret)});
+
+@app.route('/cbrecset',  methods=['POST'])
+def cbrec():
+    try:
+       tojson = request.get_json();
+       #status, ret = loadport(tojson);
+       status, ret = loadport(tojson);
+       print("loadport status: (%s)" %(status))
+       status, ret = loadnetconfcbrec(tojson);
+       print (ret);
+    except Exception:
+       status = 'false';
+       return jsonify({"status": status, "getconfig": ''});
+       raise exceptions.WrongParametersException
+    return jsonify({"status": status, "getconfig":str(ret)});
+
 @app.route('/qbuset',  methods=['POST'])
 def qbuset():
     try:
@@ -504,6 +656,14 @@ def getconfig():
        return jsonify({"status": status, "getconfig": ''});
        raise exceptions.WrongParametersException
     return jsonify({"status": status, "getconfig":str(ret)});
+
+@app.route('/configcbgenHTML')
+def configcbgenHTML():
+    return render_template('configcbgen.html')
+
+@app.route('/configcbrecHTML')
+def configcbrecHTML():
+    return render_template('configcbrec.html')
 
 @app.route('/configQciHTML')
 def configQciHTML():

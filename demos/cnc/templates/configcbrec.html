@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Config Cbrec</title>
+    <script src="static/jquery.min.js">
+    </script>
+    <style>
+.button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 4px 6px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 13px;
+    margin: 2px 1px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+.device {
+    background-color: white; 
+    color: black; 
+    border: 2px solid #4CAF50;
+    -webkit-transition-duration: 0.1s; /* Safari */
+    transition-duration: 0.1s;
+    border-radius: 5%;
+}
+.device:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.value {
+    background-color: white; 
+    color: black; 
+    width: 60px;
+    height: 10px;
+    border: 2px solid #4CAF50;
+    border-radius: 5%;
+}
+.value:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.confirm {
+    background-color: #4CAF50; 
+    color: black; 
+    position: center;
+    font-weight: bold;
+    font-size: 15px;
+    border: 2px solid #4CAF50;
+    border-radius: 5%;
+}
+.confirm:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.addlist {
+    background-color: white; 
+    color: black; 
+    padding: 2px 6px;
+    font-weight: bold;
+    border: 2px solid #4CAF50;
+    border-radius: 100%;
+}
+.addlist:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+</style>
+<script>
+Array.prototype.indexOf = function(val) {
+for (var i = 0; i < this.length; i++) {
+if (this[i] == val) return i;
+}
+return -1;
+};
+
+Array.prototype.remove = function(val) {
+var index = this.indexOf(val);
+if (index > -1) {
+this.splice(index, 1);
+}
+};
+
+</script>
+
+    <script>
+	function getUrlParam(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null) return unescape(r[2]);
+		return null;
+	}
+    </script>
+
+</head>
+<body>
+<script>
+var portname = window.parent.deviceport;
+var gatelist = [0];
+var index = 0;
+var enable = 'true';
+console.log("setting =================");
+console.log(portname);
+
+function delgateentry(indexp)
+{
+	var buttondash = "dellist"+indexp;
+	var gatep = "g"+indexp;
+	var periodp = "p"+indexp;
+	var returnp = "return"+indexp;
+	$("#"+buttondash).remove();
+	$("#"+gatep).remove();
+	$("#"+periodp).remove();
+	$("#"+returnp).remove();
+	gatelist.remove(indexp);
+}
+
+function addgateentry()
+{
+	var indexplus =  index + 1;
+	$('#addlist').before("<input class=\"button addlist\" type=\"button\" name=\"dellist\" \
+			id=\"dellist"+index+"\"	onclick=\"delgateentry("+index+")\" value=\"-\"> \
+			<br id=\"return"+index+"\"> \
+			<input class=\"button value\" type=\"text\" name=\"gate\" id=\"g"+indexplus+"\"> \
+			<input class=\"button value\" type=\"text\" name=\"period\" id=\"p"+indexplus+"\">");
+	index += 1;
+	gatelist.push(indexplus);
+}
+
+function HTMLEncode(html) {
+	var temp = document.createElement("div");
+	(temp.textContent != null) ? (temp.textContent = html) : (temp.innerText = html);
+	var output = temp.innerHTML;
+	temp = null;
+	return output;
+}
+
+function confirmset()
+{
+	var cbrecpara = {};
+        var deviceself = window.parent.formgetnameip();
+
+        cbrecpara["index"]  = $("input[name='index']").val();
+        cbrecpara["hislen"] = $("input[name='hislen']").val();
+        cbrecpara["port_name"] = $("input[name='port']").val();
+        console.log(deviceself, deviceself['devicename']);
+        cbrecpara["device"] = deviceself['deviceip'];
+        cbrecpara["port"] = portname;//$("#portselect").val();
+	console.log(cbrecpara);
+
+
+	$.ajax({
+		type: "POST",
+		url: "/cbrecset",
+		dataType: "json",
+		contentType: "application/json; charset=utf-8",
+		data: JSON.stringify(cbrecpara),
+		success: function(data){
+			if (data.status == 'false')
+				alert('Feedback ERROR!');
+
+			$('#outputcontent', parent.document).append("<pre>"+"editconfig operation: "+ HTMLEncode(data.status)+"</pre>");
+			window.parent.showconfig("if:interfaces", data.getconfig);
+			window.parent.showconfig("dot1q:bridges", data.getconfig);
+			window.parent.showconfig("bridges", data.getconfig);
+			window.parent.showconfig("interfaces", data.getconfig);
+			window.parent.showconfig("frer:frame-replication-and-elimination", data.getconfig);
+			window.parent.showconfig("frame-replication-and-elimination", data.getconfig);
+			//$('#outputcontent', parent.document).append("<pre><code>"+parameter+"</code></pre>");
+			$('#outputcontent', parent.document).append("<pre>"+HTMLEncode('-------------------------')+window.parent.counter+HTMLEncode('-------------------------')+"</pre>");
+			window.parent.counter += 1;
+		}});
+}
+
+</script>
+<div>
+<form>
+<b>*device:
+
+<br><br>
+<br><br>port:
+<input class="button value" type="text" name="port" id="port" value="swp0">
+<br>index:
+<input class="button value" type="text" name="index" id="index" value="1">
+<br>history length:
+<input class="button value" type="text" name="hislen" id="hislen" value="31">
+<br>
+
+<input class="button device confirm" type="button" name="confirm" id="confirm" onclick="confirmset()" value="Yes, confirm">
+</form>
+</div>
+</body>
+</html>
