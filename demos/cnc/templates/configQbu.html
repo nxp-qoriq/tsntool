@@ -69,9 +69,7 @@ function selectpreempt()
 {
 	var i = 0;
 	$('input:radio[value="preemptable"]').each(function(){
-				var isChecked = $(this).attr("checked");
-				if (isChecked == "checked") {
-					console.log(isChecked);
+				if ($(this).is(":checked")) {
 					$("input[type=radio][name=enable][value=true]").attr("checked", "checked");
 					enable = 'true';
 					return false; //measn break;
@@ -110,8 +108,7 @@ function confirmset()
 	preemptset['port'] = portname;//$("#portselect").val();
 
 	$('input:radio[value="preemptable"]').each(function(){
-				var isChecked = $(this).attr("checked");
-				if (isChecked == "checked")
+				if ($(this).is(":checked"))
 					preemptset['plist'].push({tc: i, preemptable: "preemptable"});
 				else
 					preemptset['plist'].push({tc: i, preemptable: "express"});
