@@ -22,7 +22,7 @@ import pprint
 import os
 from copy import deepcopy
 
-GROUP_NAME="rt-edge"
+GROUP_NAME="real-time-edge"
 
 def removeknowhost():
 	print("remove /root/.ssh/known_hosts");
