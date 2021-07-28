@@ -455,7 +455,7 @@ static void cmd_tsn_cap_get_help(void)
 int cli_cmd_tsn_cap_get(UNUSED int argc, UNUSED char *argv[],
 					 UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret = 0;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
@@ -468,7 +468,9 @@ int cli_cmd_tsn_cap_get(UNUSED int argc, UNUSED char *argv[],
 		) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -500,7 +502,7 @@ static void cmd_qci_str_para_get_help(void)
 int cli_cmd_qci_cap_get(UNUSED int argc, UNUSED char *argv[],
 					 UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret = 0;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
@@ -513,7 +515,9 @@ int cli_cmd_qci_cap_get(UNUSED int argc, UNUSED char *argv[],
 		) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -555,7 +559,7 @@ static void cmd_qbvset_help(void)
 
 int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int config_fd;
 	int device = 0;
 	struct stat config_stat;
@@ -578,7 +582,9 @@ int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:f:hm:cb:eqy:x:", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -732,7 +738,7 @@ static void cmd_qbvget_help(void)
 
 int cli_cmd_qbv_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
 	int option_index = 0;
@@ -743,7 +749,9 @@ int cli_cmd_qbv_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -784,7 +792,7 @@ static void cmd_qcisfiset_help(void)
 
 int cli_cmd_qci_sfi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint8_t enable = 0, disable = 0;
@@ -805,7 +813,9 @@ int cli_cmd_qci_sfi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:eqi:s:p:g:u:f:ovh", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -903,7 +913,7 @@ static void cmd_qcisfiget_help(void)
 
 int cli_cmd_qci_sfi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	int32_t sfid = -1;
@@ -916,7 +926,9 @@ int cli_cmd_qci_sfi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -973,7 +985,7 @@ void cmd_cbstreamidset_help(void)
 
 int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint8_t enable = 0, disable = 0;
@@ -999,7 +1011,9 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 			 long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1186,7 +1200,7 @@ void cmd_cbstreamidget_help(void)
 
 int cli_cmd_streamid_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	int32_t index = -1;
@@ -1199,7 +1213,9 @@ int cli_cmd_streamid_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1248,7 +1264,7 @@ void cmd_qcisgiset_help(void)
 
 int cli_cmd_qci_sgi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	struct stat config_stat;
@@ -1271,7 +1287,9 @@ int cli_cmd_qci_sgi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 			 long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1435,7 +1453,7 @@ void cmd_qcisgiget_help(void)
 
 int cli_cmd_qci_sgi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint32_t index = 0;
@@ -1448,7 +1466,9 @@ int cli_cmd_qci_sgi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1498,7 +1518,7 @@ void cmd_qcifmiset_help(void)
 
 int cli_cmd_qci_fmi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint32_t index = 0;
@@ -1516,7 +1536,9 @@ int cli_cmd_qci_fmi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 			 long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1601,7 +1623,7 @@ void cmd_qcifmiget_help(void)
 
 int cli_cmd_qci_fmi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint32_t index = 0;
@@ -1614,7 +1636,9 @@ int cli_cmd_qci_fmi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1694,7 +1718,7 @@ static int get_tc_percent(char **s, uint8_t *tc, uint8_t *p)
 
 int cli_cmd_cbs_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	bool opt_t = 0, opt_p = 0;
@@ -1710,7 +1734,9 @@ int cli_cmd_cbs_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:t:p:a:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1783,7 +1809,7 @@ void cmd_cbs_get_help(void)
 
 int cli_cmd_cbs_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint8_t tc = 0;
@@ -1796,7 +1822,9 @@ int cli_cmd_cbs_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1838,7 +1866,7 @@ void cmd_tsd_set_help(void)
 }
 int cli_cmd_tsd_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	bool enable = true;
@@ -1853,7 +1881,9 @@ int cli_cmd_tsd_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:p:f:ieqh", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1913,7 +1943,7 @@ void cmd_tsd_get_help(void)
 
 int cli_cmd_tsd_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
@@ -1925,7 +1955,9 @@ int cli_cmd_tsd_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1958,7 +1990,7 @@ void cmd_qbuset_help(void)
 
 int cli_cmd_qbu_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint8_t preemptable = 0;
@@ -1971,7 +2003,9 @@ int cli_cmd_qbu_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:p:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2009,7 +2043,7 @@ void cmd_qbugetstatus_help(void)
 
 int cli_cmd_qbu_get_status(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
 	int option_index = 0;
@@ -2020,7 +2054,9 @@ int cli_cmd_qbu_get_status(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdn
 	while ((c = getopt_long(argc, argv, "d:p:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2057,7 +2093,7 @@ void cmd_sendip_help(void)
 
 int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
 	int option_index = 0;
@@ -2073,7 +2109,9 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:l:t:c:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2242,7 +2280,7 @@ void cmd_ctset_help(void)
 
 int cli_cmd_ct_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint8_t queue_stat = 0;
@@ -2255,7 +2293,9 @@ int cli_cmd_ct_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:q:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2298,7 +2338,7 @@ void cmd_cbgenset_help(void)
 
 int cli_cmd_cbgen_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint32_t index = 0;
@@ -2315,7 +2355,9 @@ int cli_cmd_cbgen_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber
 	while ((c = getopt_long(argc, argv, "d:h:i:p:s:l:n", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2382,7 +2424,7 @@ void cmd_cbrecset_help(void)
 
 int cli_cmd_cbrec_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	uint32_t index = 0;
@@ -2398,7 +2440,9 @@ int cli_cmd_cbrec_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber
 	while ((c = getopt_long(argc, argv, "d:h:i:l:s:r", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2453,7 +2497,7 @@ void cmd_cbget_help(void)
 
 int cli_cmd_cbstatus_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c, index, ret;
+	int c, index, ret, n;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
 	int option_index = 0;
@@ -2464,7 +2508,9 @@ int cli_cmd_cbstatus_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2506,7 +2552,7 @@ void cmd_dscpset_help(void)
 
 int cli_cmd_dscp_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
-	int c;
+	int c, n;
 	int ret;
 	int device = 0;
 	int index = 0;
@@ -2522,7 +2568,9 @@ int cli_cmd_dscp_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:hui:c:p:", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			strcpy(portname, optarg);
+			n = strlen(optarg);
+			n = (n > IF_NAMESIZE) ? IF_NAMESIZE : n;
+			strncpy(portname, optarg, n);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
