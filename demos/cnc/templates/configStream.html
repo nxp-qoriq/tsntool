@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Config Stream</title>
+    <script src="static/jquery.min.js">
+    </script>
+    <style>
+.button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 4px 6px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 13px;
+    margin: 2px 1px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+.device {
+    background-color: white; 
+    color: black; 
+    border: 2px solid #4CAF50;
+    -webkit-transition-duration: 0.1s; /* Safari */
+    transition-duration: 0.1s;
+    border-radius: 5%;
+}
+.device:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.value {
+    background-color: white; 
+    color: black; 
+    width: 60px;
+    height: 10px;
+    border: 2px solid #4CAF50;
+    border-radius: 5%;
+}
+.value:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.confirm {
+    background-color: #4CAF50; 
+    color: black; 
+    position: center;
+    font-weight: bold;
+    font-size: 15px;
+    border: 2px solid #4CAF50;
+    border-radius: 5%;
+}
+.confirm:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.addlist {
+    background-color: white; 
+    color: black; 
+    padding: 2px 6px;
+    font-weight: bold;
+    border: 2px solid #4CAF50;
+    border-radius: 100%;
+}
+.addlist:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.macinput {
+    background-color: white;
+    color: black;
+    padding: 2px 2px;
+    width: 20px;
+    font-weight: bold;
+    border: 1px solid #4CAF50;
+    border-radius: 5%;
+}
+.macinput:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+</style>
+<script>
+Array.prototype.indexOf = function(val) {
+for (var i = 0; i < this.length; i++) {
+if (this[i] == val) return i;
+}
+return -1;
+};
+
+Array.prototype.remove = function(val) {
+var index = this.indexOf(val);
+if (index > -1) {
+this.splice(index, 1);
+}
+};
+
+</script>
+
+    <script>
+	function getUrlParam(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null) return unescape(r[2]);
+		return null;
+	}
+    </script>
+
+</head>
+<body>
+<script>
+
+function HTMLEncode(html) {
+	var temp = document.createElement("div");
+	(temp.textContent != null) ? (temp.textContent = html) : (temp.innerText = html);
+	var output = temp.innerHTML;
+	temp = null;
+	return output;
+}
+
+function choosport()
+{
+	var checkValue = $("#portselect").val();
+}
+
+function updatepath()
+{
+	var stream = {};
+	var deviceself = window.parent.formgetnameip();
+
+	stream["device"] = deviceself['devicename'];
+	stream["endboard"] = $("input[name='endboard']").val();
+	stream["endport"] = $("#portselect").val();
+
+	$.ajax({
+		type: "POST",
+		url: "/pathselect",
+		dataType: "json",
+		contentType: "application/json; charset=utf-8",
+		data: JSON.stringify(stream),
+		success: function(data){
+			if (data.status == 'false')
+				alert('Feedback ERROR!');
+			for (var i = 0; i < data.pathnum; i ++) {
+				$("#pathselect").append("<option>" + data.path[i] + "</option>");
+			}
+		}});
+}
+
+function confirmset()
+{
+	var stream = {};
+	var deviceself = window.parent.formgetnameip();
+
+	console.log(deviceself, deviceself['devicename']);
+	stream["device"] = deviceself['devicename'];
+	
+	stream["endboard"] = $("input[name='endboard']").val();
+	stream["endport"] = $("#portselect").val();
+
+	var streamid = $("input[name='streamid']").val();
+	if (streamid != '') {
+		stream["streamid"] = streamid;
+		if (isNaN(parseInt(streamid))) {
+			alert("stream ID Error!");
+			return;
+		}
+	}
+
+	var vid = $("input[name='vid']").val();
+	if (streamid != '') {
+		stream["vid"] = vid;
+		if (isNaN(parseInt(vid))) {
+			alert("VLAN ID Error!");
+			return;
+		}
+	}
+
+	var priority = $("input[name='priority']").val();
+	if (priority != '') {
+		stream["priority"] = priority;
+		if (isNaN(parseInt(priority))) {
+			alert("priority Error!");
+			return;
+		}
+	}
+
+	$.ajax({
+		type: "POST",
+		url: "/streamregister",
+		dataType: "json",
+		contentType: "application/json; charset=utf-8",
+		data: JSON.stringify(stream),
+		success: function(data){
+			if (data.status == 'false')
+				alert('Feedback ERROR!');
+
+			$('#outputcontent', parent.document).append("<pre>"+"editconfig operation: "+ HTMLEncode(data.status)+" delay:"+HTMLEncode(data.delay)+"</pre>");
+			//$('#outputcontent', parent.document).append("<pre><code>"+parameter+"</code></pre>");
+			$('#outputcontent', parent.document).append("<pre>"+HTMLEncode('-------------------------')+window.parent.counter+HTMLEncode('-------------------------')+"</pre>");
+			window.parent.counter += 1;
+		}});
+}
+
+</script>
+<div>
+<form>
+<br><br>&nbsp;&nbsp;end board:
+<input class="button value" type="text" name="endboard" id="endboard">
+<br>&nbsp;&nbsp;end port:&nbsp;
+<select class="button device" id="portselect" name="portselect" onchange="choosport()">
+	<option value="swp0" selected>swp0</option>
+	<option value="swp1">swp1</option>
+	<option value="swp2">swp2</option>
+	<option value="swp3">swp3</option>
+ </select>
+<br>&nbsp;&nbsp;path select:
+<select class="button device" id="pathselect" name="pathselect" onchange="updatepath()">
+	<option value="default" selected>default</option>
+ </select>
+<br><br>&nbsp;&nbsp;stream ID:
+<input class="button value" type="text" name="streamid" id="streamid">
+<br><br>&nbsp;&nbsp;VLAN ID:&nbsp;&nbsp;
+<input class="button value" type="text" name="vid" id="vid">
+<br><br>&nbsp;&nbsp;priority:&nbsp;
+<input class="button value" type="text" name="priority" id="priority">
+<br><br>
+<input class="button device confirm" type="button" name="confirm" id="confirm" onclick="confirmset()" value="Yes, confirm">
+</form>
+</div>
+</body>
+</html>

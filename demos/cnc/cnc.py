@@ -20,6 +20,7 @@ import asyncio
 import websockets
 import pprint
 import os
+import xml.dom.minidom
 from copy import deepcopy
 
 GROUP_NAME="real-time-edge"
@@ -134,6 +135,37 @@ def loadnetconfqbv(configdata):
     qbvxmlstr = str(qbvxmlb, encoding='utf-8');
 
     return loadNetconf(qbvxmlstr, configdata['device']);
+
+def loadbridge_vlan(configdata):
+    bridges = ET.Element('bridges');
+    bridges.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge");
+    bridges.set('xmlns:stream', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-stream-id");
+
+    bridge = ET.SubElement(bridges, 'bridge');
+    name = ET.SubElement(bridge, 'name');
+    name.text = 'switch';
+    address = ET.SubElement(bridge, 'address');
+    address.text = 'd6-ad-62-c5-49-ae'
+
+    bridgetype = ET.SubElement(bridge, 'bridge-type');
+    bridgetype.text = 'provider-bridge'
+    component = ET.SubElement(bridge, 'component');
+    name_ = ET.SubElement(component, 'name');
+    name_.text = 'eno0';
+    type_ = ET.SubElement(component, 'type');
+    type_.text = 'edge-relay-component';
+    bridgeVlan = ET.SubElement(component, 'bridge-vlan');
+    vlan = ET.SubElement(bridgeVlan, 'vlan');
+    vid = ET.SubElement(vlan, 'vid');
+    vid.text = configdata['vid'];
+    portname = ET.SubElement(vlan, 'name');
+    portname.text = configdata['port_name'];
+
+    prettyXml(bridges);
+    bridgexmlb = ET.tostring(bridges, encoding='utf8', method='xml');
+    bridgexmlstr = str(bridgexmlb, encoding='utf-8');
+    print(configdata['device'])
+    return loadNetconf(bridgexmlstr, configdata['device']);
 
 def loadstream_handle(configdata):
     print(configdata);
@@ -550,6 +582,43 @@ api = Api(app)
 def index():
     return render_template('index.html')
 
+@app.route('/configstreamHTML')
+def configstreamHTML():
+    return render_template('indexstream.html')
+
+@app.route('/configStreamQbvHTML')
+def configStreamQbvHTML():
+    return render_template('configStreamQbv.html')
+
+@app.route('/qbvstreamset',  methods=['POST'])
+def qbvstreamset():
+    try:
+        tojson = request.get_json();
+        stream = streams[tojson['sid']];
+        streampath = stream['path'];
+        delay = 0;
+        conf = dict();
+        conf['priority'] = stream['priority'];
+        conf['basetime'] = tojson['basetime'];
+        conf['cycletime'] = tojson['cycletime'];
+        conf['opentime'] = tojson['opentime'];
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            port = streampath[i][2];
+            print(board+':'+port);
+            if (port == ''):
+                continue;
+            baseoffset = board_qbv_set(board, port, conf, delay)
+            if (baseoffset < 0):
+                status = 'false';
+                break;
+            pdelays = literal_eval(gdelays[board]);
+            delay = delay + baseoffset + int(pdelays[port]);
+        status = 'true';
+    except Exception:
+        status = 'false';
+    return jsonify({"status": status, "delay": delay});
+
 @app.route('/configdeviceHTML')
 def configdeviceHTML():
     deviceip = request.args.get('ip');
@@ -876,6 +945,129 @@ def get_route_path(source, target):
             'path' : str(ret_path)
             })
 
+streams = {};
+streampaths = [];
+streampath_tmp = [];
+
+def lookup_streampath(target, local, local_intf):
+    global neighbors_for_client;
+    global streampath_tmp;
+    global streampaths;
+
+    if local == target:
+        streampath_tmp.append([local, local_intf, '']);
+        streampaths.append(streampath_tmp.copy());
+        streampath_tmp.pop();
+        return;
+
+    for node in streampath_tmp:
+        if local == node[0]:
+            return;
+
+    for item in neighbors_for_client[local]:
+        if item['local_intf'] == local_intf:
+            continue;
+        streampath_tmp.append([local, local_intf, item['local_intf']]);
+        lookup_streampath(target, item['neighbor'], item['neighbor_intf']);
+        streampath_tmp.pop();
+
+    return;
+
+def board_qbv_conf_set(board, port, conf):
+    for key, value in devices.items():
+        if (value['name'] == board):
+            deviceip = value['ip'];
+            break;
+    basetime = float(conf['basetime'])/1000000000;
+    conf['basetime'] = str(basetime);
+    conf['device'] = deviceip;
+    conf['port'] = port;
+    conf['enable'] = 'true';
+    ret = loadnetconfqbv(conf);
+    return ret;
+
+def board_qbv_conf_get(board, port):
+    for key, value in devices.items():
+        if (value['name'] == board):
+            deviceip = value['ip'];
+            break;
+
+    configdata = dict();
+    configdata['device'] = deviceip;
+    status, getfeedback = loadgetconfig(configdata);
+    getfeedback = "<root>" + getfeedback + "</root>";
+    dom1 = xml.dom.minidom.parseString(getfeedback);
+    interfacelist = dom1.getElementsByTagName('interface');
+    for interface in interfacelist:
+        name = interface.getElementsByTagName('name')[0];
+        if (name.firstChild.data == port):
+            nodelist = interface.getElementsByTagName('gate-parameters');
+            for node in nodelist:
+                if (node.getAttribute("xmlns") == 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-sched'):
+                    btnode = node.getElementsByTagName('admin-base-time')[0];
+                    btsec = btnode.getElementsByTagName('seconds')[0].firstChild.data;
+                    btnsec = btnode.getElementsByTagName('fractional-seconds')[0].firstChild.data;
+                    basetime = int(btsec)*1000000000 + int(btnsec);
+                    gcl_list = node.getElementsByTagName('admin-control-list');
+                    gcls = [];
+                    cycletime = 0;
+                    for gcl_node in gcl_list:
+                        gate = gcl_node.getElementsByTagName('gate-states-value')[0].firstChild.data;
+                        interval = gcl_node.getElementsByTagName('time-interval-value')[0].firstChild.data;
+                        gcls.append({'gate':gate, 'period':interval});
+                        cycletime += int(interval);
+                    conf = {'basetime':str(basetime), 'cycletime': str(cycletime), 'entry': gcls};
+                    return conf;
+            break;
+
+    return None;
+
+def board_qbv_set(board, port, streamconf, delay):
+    conf = board_qbv_conf_get(board, port);
+    print("Get Qbv config params:");
+    print (conf);
+    btime = int(float(streamconf['basetime'])*1000000000);
+    if (conf == None):
+        print("There is no Qbv config on this device port");
+        btime += delay;
+        gatestatus = 1 << int(streamconf['priority']);
+        closetime = int(streamconf['cycletime']) - int(streamconf['opentime']);
+        conf = {'basetime': str(btime), 'cycletime': streamconf['cycletime'], 'entry': [{'gate': str(gatestatus), 'period': streamconf['opentime']}, {'gate': str(255), 'period': str(closetime)}]};
+        print("Qbv config data:");
+        print (conf);
+        board_qbv_conf_set(board, port, conf);
+        return 0;
+
+    if (conf['cycletime'] != streamconf['cycletime']):
+        return -1;
+
+    begin = (btime + delay - int(conf['basetime'])) % int(conf['cycletime']);
+    interval_len = 0;
+    offset = 0;
+    i = 0;
+    for entry in conf['entry']:
+        i = i + 1;
+        if (begin >= interval_len and begin < (interval_len + int(entry['period']))):
+            if (int(entry['gate']) == 255 and
+                    (begin + int(streamconf['opentime'])) <= (interval_len + int(entry['period']))):
+                interval = interval_len + int(entry['period']) - begin - int(streamconf['opentime']);
+                if (interval > 0):
+                    conf['entry'].insert(i, {'gate':'255', 'period':str(interval)});
+                gatestatus = 1 << int(streamconf['priority']);
+                conf['entry'].insert(i, {'gate':str(gatestatus), 'period':streamconf['opentime']});
+                interval = begin - interval_len;
+                if (interval > 0):
+                    conf['entry'].insert(i, {'gate':'255', 'period':str(interval)});
+                conf['entry'].pop(i - 1);
+                board_qbv_conf_set(board, port, conf);
+                return offset
+            else:
+                offset += interval_len + int(entry['period']) - begin
+                begin = interval_len + int(entry['period']);
+        interval_len += int(entry['period']);
+
+    return -1;
+
 @app.route('/topology/graph.json',methods=['GET'])
 def get_graph_file():
     SITE_ROOT = os.path.realpath(os.path.dirname(__file__))
@@ -936,10 +1128,65 @@ def get_ports_delay():
 def front_get_path():
     global neighbors_for_client;
     global gdelays;
+    global streampaths;
+
     source = request.args.get('source');
     target = request.args.get('target');
     path = get_route_path(source, target);
+    streampaths.clear();
+    lookup_streampath(target, source, '');
     return (jsonify(path));
+
+@app.route('/topology/streamregister', methods=['POST'])
+def stream_register():
+    global streampaths;
+    global streams;
+
+    stream = dict();
+    configdata = dict();
+    try:
+        tojson = request.get_json();
+        stream['vid'] = tojson['vid'];
+        stream['priority'] = tojson['priority'];
+        pathid = int(tojson['pathid']);
+        stream['path'] = streampaths[pathid];
+        streams[tojson['streamid']] = stream.copy();
+
+        configdata['vid'] = stream['vid'];
+        for i in range(len(streampaths[pathid])):
+            configdata['port_name'] = streampaths[pathid][i][1];
+            board = streampaths[pathid][i][0];
+            for key, value in devices.items():
+                if (value['name'] == board):
+                    deviceip = value['ip'];
+                    break;
+            configdata['device'] = deviceip;
+            if (configdata['port_name'] != ''):
+                loadbridge_vlan(configdata);
+            configdata['port_name'] = streampaths[pathid][i][2];
+            if (configdata['port_name'] != ''):
+                loadbridge_vlan(configdata);
+
+        status = 'true';
+
+    except Exception:
+        status = 'false';
+
+    return jsonify(streams);
+
+@app.route('/topology/getstreampaths', methods=['GET'])
+def get_stream_paths():
+    global streampaths;
+
+    pathdict = dict();
+    for i in range(len(streampaths)):
+        str = '';
+        for j in range(len(streampaths[i])):
+            str = str + streampaths[i][j][0] + '-';
+        pathdict[i] = str;
+
+    return (jsonify(pathdict));
+
 
 def get_topology():
     '''
