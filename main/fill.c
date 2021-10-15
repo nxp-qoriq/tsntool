@@ -120,7 +120,7 @@ void qbv_fill_one_entry(struct tsn_qbv_entry *conf, uint32_t num, uint8_t gate, 
 				(conf + num), (conf + num)->gate_state, (conf + num)->time_interval);
 }
 
-int qbv_entry_parse(char *config, struct tsn_qbv_entry *conf, uint32_t *count, uint32_t *cycletime)
+static int qbv_entry_parse_from_file(char *config, struct tsn_qbv_entry *conf, uint32_t *count, uint32_t *cycletime)
 {
 	char *delim = "\n";
 	char *pch;
@@ -180,6 +180,73 @@ int qbv_entry_parse(char *config, struct tsn_qbv_entry *conf, uint32_t *count, u
 
 		pch = strtok(NULL, delim);
 	}
+
+	return 0;
+}
+
+static int qbv_entry_parse_from_para(char *config, struct tsn_qbv_entry *conf, uint32_t *count, uint64_t *cycletime)
+{
+	char *delim = "]";
+	char *pch;
+	uint32_t number;
+	char state[10];
+	uint32_t time;
+	int gate;
+
+	*count = 0;
+
+	pch = strtok(config, delim);
+
+	while (pch != NULL) {
+
+		while ((*pch == ' ') || (*pch == '\t') || (*pch == '['))
+			pch++;
+
+		if (*pch == '#') {
+			pch = strtok(NULL, delim);
+			continue;
+		}
+
+		if ((*pch == 'T') || (*pch == 't')) {
+			sscanf((pch + 1), "%d/%9s/%d", &number, state, &time);
+
+			logv("\n qbv entry: number: %d		state: %s		time: %d\n", number, state, time);
+
+			if (number < *count) {
+				logv("ERROR: Duplicate number.\n");
+				return -1;
+			}
+
+			if (number >= MAX_ENTRY_SIZE) {
+				logv("ERROR: larger than max entry number");
+				return -1;
+			}
+
+			if (!time) {
+				logv("WARNING: time period should not be zero.\n");
+				pch = strtok(NULL, delim);
+				continue;
+			}
+
+			//sscanf(st, "%[0-1]", state);
+
+			gate = qbv_str2gate(state);
+			if (gate < 0) {
+				logv("gate value is not valid for entry number T%d.\n", number);
+				return -1;
+			}
+
+			qbv_fill_one_entry(conf, *count, (uint8_t)gate, time);
+
+			(*cycletime) += (uint64_t)time;
+			(*count)++;
+		}
+
+		pch = strtok(NULL, delim);
+	}
+
+	if (*count == 0)
+		return -1;
 
 	return 0;
 }
@@ -254,10 +321,14 @@ int fill_qbv_set(char *portname, char *config, bool enable, uint8_t configchange
 
 	memset(conf, 0, MAX_ENTRY_SIZE);
 
-	ret  = qbv_entry_parse(config, conf, &count, &cycletime);
+	ret = qbv_entry_parse_from_para(config, conf, &count, &cycletime);
 	if (ret < 0) {
-		free(conf);
-		return -1;
+		count = 0; cycletime = 0;
+		ret  = qbv_entry_parse_from_file(config, conf, &count, &cycletime);
+		if (ret < 0) {
+			free(conf);
+			return -1;
+		}
 	}
 
 	adminconf.admin.cycle_time = cycletime;

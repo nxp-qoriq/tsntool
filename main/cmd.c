@@ -584,8 +584,9 @@ int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 			break;
 		case 'f':
 			if (access(optarg, R_OK) != 0) {
-				ERROR("setqbv", "There isn't a local file (%s).", strerror(errno));
-				return -1;
+				/* for further parser */
+				config = strdup(optarg);
+				break;
 			}
 			config_fd = open(optarg, O_RDONLY);
 			if (config_fd == -1) {
