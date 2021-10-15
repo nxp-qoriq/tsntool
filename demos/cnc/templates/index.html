@@ -31,8 +31,13 @@
   </div>
   <div class="infobox2" id="infobox2" >
   </div>
+  <div class="infobox3" id="infobox3" >
+  </div>
   <div>
 	<button type="button" id="checkpathBT" onclick="inputTwoDevices();">Check Path</button>
+  </div>
+  <div>
+	<button type="button" id="streamregister" onclick="registerstream();">Register Stream</button>
   </div>
 </td></tr></table >
 </div>
@@ -45,6 +50,105 @@
 function LoadconfigdeviceHTML(n, i, p)
 {
 	window.location.replace('/configdeviceHTML?name='+n+'&ip='+i+'&port='+p);
+}
+
+function LoadconfigstreamHTML(s)
+{
+	window.location.replace('/configstreamHTML?sid='+s);
+}
+
+var streamsetshow =  '<form id="formSetStream"> \
+	<br>Path Select: \
+	<select class="button device" id="pathselect" name="pathselect"> \
+	</select> \
+	<br>VLAN ID:&nbsp;&nbsp; \
+	<input type="text" id="vid" name="vid" value=""> \
+	<br>Stream ID:&nbsp; \
+	<input type="text" id="sid" name="sid" value=""> \
+	<br>Priority:&nbsp; \
+	<input type="text" id="priority" name="priority" value=""> \
+	<input type="button" id="add" value="Add" onclick="streamadd()"> \
+	</form>';
+
+function registerstream() {
+	$("#streamregister").after(streamsetshow);
+	$.ajax({
+		type:"GET",
+		url: "/topology/getstreampaths",
+		dataType: "json",
+		contentType: "application/json; charset=utf-8",
+		success: function (data) {
+			console.log("========GET PATH=====");
+			for (var i in data) {
+				$("#pathselect").append("<option value=" + i + ">" + data[i] + "</option>");
+			}
+		}
+	});
+}
+
+function streamadd() {
+	var stream = {};
+
+	stream["pathid"] = $("#pathselect").val();
+	var sid = $("input[name='sid']").val();
+	if (sid != '') {
+		stream["streamid"] = sid;
+		if (isNaN(parseInt(sid))) {
+			alert("stream ID Error!");
+			return;
+		}
+	}
+
+	var vid = $("input[name='vid']").val();
+	if (vid != '') {
+		stream["vid"] = vid;
+		if (isNaN(parseInt(vid))) {
+			alert("VLAN ID Error!");
+			return;
+		}
+	}
+
+	var priority = $("input[name='priority']").val();
+	if (priority != '') {
+		stream["priority"] = priority;
+		if (isNaN(parseInt(priority))) {
+			alert("priority Error!");
+			return;
+		}
+	}
+
+	$.ajax({
+		type: "POST",
+		url: "/topology/streamregister",
+		dataType: "json",
+		contentType: "application/json; charset=utf-8",
+		data: JSON.stringify(stream),
+		success: function(data){
+			if (data.status == 'false')
+				alert('Feedback ERROR!');
+			text = tableFromStream(data);
+			printToDivWithID("infobox3","<font color=\"red\">Stream List:</font><br>" + text);
+		}
+	});
+	$("#formSetStream").remove();
+}
+
+function tableFromStream(data){
+  text = "<table class=\"infobox3\" table border='1' cellspacing='0'>";
+  text+= "<thead><th><u><h4>STREAM ID</h4></u></th><th><u><h4>VLAN ID</h4></u></th><th><u><h4>PRIORITY</h4></u></th>";
+  text+= "</thead>";
+
+  for (var sid in data) {
+    text+= "<tr>";
+    text+= "<td><a href=\"javascript:LoadconfigstreamHTML('"+sid+"');\">" + sid + "</td>";
+    text+= "<td>" + data[sid]['vid'] + "</td>";
+    text+= "<td>" + data[sid]['priority'] + "</td>";
+    text+= "</tr>";
+  }
+
+  text+= "</table>";
+
+  return text;
 }
 
 var focusinput = undefined;
