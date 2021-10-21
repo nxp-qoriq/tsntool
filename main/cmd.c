@@ -1079,7 +1079,7 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 				mac = strtoull(optarg, NULL, ret);
 			} else {
 				char temp[25];
-				strcpy(temp, optarg);
+				snprintf(temp, 25, "%s\0", optarg);
 				sscanf(temp, "%2hx:%2hx:%2hx:%2hx:%2hx:%2hx",
 						&smac[0], &smac[1], &smac[2], &smac[3], &smac[4], &smac[5]);
 				mac = 0;
@@ -1108,7 +1108,7 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 				mac = strtoull(optarg, NULL, ret);
 			} else {
 				char temp[25];
-				strcpy(temp, optarg);
+				snprintf(temp, 25, "%s\0", optarg);
 				sscanf(temp, "%2hx:%2hx:%2hx:%2hx:%2hx:%2hx",
 						&smac[0], &smac[1], &smac[2], &smac[3], &smac[4], &smac[5]);
 				mac = 0;
@@ -2063,7 +2063,7 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
 	int option_index = 0;
 	char portname[IF_NAMESIZE];
-	char smac[10];
+	char smac[25];
 	unsigned char mac[6];
 	unsigned int length = 0;
 	unsigned int timeint = 0;
@@ -2088,7 +2088,7 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 			loopcount = strtoul(optarg, NULL, 0);
 			break;
 		case 's':
-			strcpy(smac, optarg);
+			snprintf(smac, 25, "%s\0", optarg);
 			logv("source mac is %s\n", smac);
 			sscanf(smac, "%d:%d:%d:%d:%d:%d", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
 			break;
