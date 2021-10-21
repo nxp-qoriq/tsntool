@@ -370,6 +370,7 @@ int fill_qbv_get(char *portname)
 	status = (struct tsn_qbv_entry *)malloc(MAX_ENTRY_SIZE);
 	if (status == NULL) {
 		loge("malloc space error.\n");
+		free(conf);
 		return -1;
 	}
 
