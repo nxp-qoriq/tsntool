@@ -184,7 +184,7 @@ static int qbv_entry_parse_from_file(char *config, struct tsn_qbv_entry *conf, u
 	return 0;
 }
 
-static int qbv_entry_parse_from_para(char *config, struct tsn_qbv_entry *conf, uint32_t *count, uint64_t *cycletime)
+static int qbv_entry_parse_from_para(char *config, struct tsn_qbv_entry *conf, uint32_t *count, uint32_t *cycletime)
 {
 	char *delim = "]";
 	char *pch;
