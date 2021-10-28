@@ -309,6 +309,16 @@ struct cli_cmd cli_commands[] = {
 			{"index", 1, 0, 'i'},
 		}
 	},
+	{ "pcpmap", cli_cmd_pcp_map, "Map Vlan PCP to priority queues",
+		{
+			{"help", 0, 0, 'h'},
+			{"device", 1, 0, 'd'},
+			{"pcp", 1, 0, 'p'},
+			{"dei", 1, 0, 'e'},
+			{"cos", 1, 0, 'c'},
+			{"dpl", 1, 0, 'l'},
+		}
+	},
 	{ "dscpset", cli_cmd_dscp_set, "set DSCP to queues and dpl",
 		{
 			{"help", 0, 0, 'h'},
@@ -1079,7 +1089,7 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 				mac = strtoull(optarg, NULL, ret);
 			} else {
 				char temp[25];
-				strcpy(temp, optarg);
+				snprintf(temp, 25, "%s\0", optarg);
 				sscanf(temp, "%2hx:%2hx:%2hx:%2hx:%2hx:%2hx",
 						&smac[0], &smac[1], &smac[2], &smac[3], &smac[4], &smac[5]);
 				mac = 0;
@@ -1108,7 +1118,7 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 				mac = strtoull(optarg, NULL, ret);
 			} else {
 				char temp[25];
-				strcpy(temp, optarg);
+				snprintf(temp, 25, "%s\0", optarg);
 				sscanf(temp, "%2hx:%2hx:%2hx:%2hx:%2hx:%2hx",
 						&smac[0], &smac[1], &smac[2], &smac[3], &smac[4], &smac[5]);
 				mac = 0;
@@ -2063,7 +2073,7 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
 	int option_index = 0;
 	char portname[IF_NAMESIZE];
-	char smac[10];
+	char smac[25];
 	unsigned char mac[6];
 	unsigned int length = 0;
 	unsigned int timeint = 0;
@@ -2088,7 +2098,7 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 			loopcount = strtoul(optarg, NULL, 0);
 			break;
 		case 's':
-			strcpy(smac, optarg);
+			snprintf(smac, 25, "%s\0", optarg);
 			logv("source mac is %s\n", smac);
 			sscanf(smac, "%d:%d:%d:%d:%d:%d", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
 			break;
@@ -2566,3 +2576,73 @@ int cli_cmd_dscp_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	return 0;
 }
 
+void cmd_pcpmap_help(void)
+{
+	printf("Mapping Vlan PCP value to queue number\n \
+			--device <ifname>\n \
+			--pcp\n \
+			--dei\n \
+			--cos\n \
+			--dpl\n \
+			--help\n\n");
+}
+
+int cli_cmd_pcp_map(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
+{
+	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
+	char portname[IF_NAMESIZE];
+	int option_index = 0;
+	int pcp = 0, dei = 0;
+	int cos = 0, dpl = 0;
+	int device = 0;
+	int ret, c;
+
+	optind = 0;
+
+	while ((c = getopt_long(argc, argv, "d:h:p:e:c:l:", long_options, &option_index)) != -1) {
+		switch (c) {
+		case 'd':
+			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			logv("device is %s\n", portname);
+			device = 1;
+			break;
+		case 'h':
+			cmd_pcpmap_help();
+			return 0;
+		case 'p':
+			ret = is_hex_oct(optarg);
+			if (ret < 0)
+				return -1;
+			pcp = (uint32_t)strtoul(optarg, NULL, ret);
+			break;
+		case 'e':
+			ret = is_hex_oct(optarg);
+			if (ret < 0)
+				return -1;
+			dei = (uint32_t)strtoul(optarg, NULL, ret);
+			break;
+		case 'c':
+			ret = is_hex_oct(optarg);
+			if (ret < 0)
+				return -1;
+			cos = (uint32_t)strtoul(optarg, NULL, ret);
+			break;
+		case 'l':
+			ret = is_hex_oct(optarg);
+			if (ret < 0)
+				return -1;
+			dpl = (uint32_t)strtoul(optarg, NULL, ret);
+			break;
+		default:
+			cmd_pcpmap_help();
+			return -1;
+		}
+	}
+	if (!device) {
+		loge("No --device not supported\n");
+	} else {
+		fill_pcp_map(portname, pcp, dei, cos, dpl);
+	}
+
+	return 0;
+}

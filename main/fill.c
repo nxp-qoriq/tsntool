@@ -184,7 +184,7 @@ static int qbv_entry_parse_from_file(char *config, struct tsn_qbv_entry *conf, u
 	return 0;
 }
 
-static int qbv_entry_parse_from_para(char *config, struct tsn_qbv_entry *conf, uint32_t *count, uint64_t *cycletime)
+static int qbv_entry_parse_from_para(char *config, struct tsn_qbv_entry *conf, uint32_t *count, uint32_t *cycletime)
 {
 	char *delim = "]";
 	char *pch;
@@ -370,6 +370,7 @@ int fill_qbv_get(char *portname)
 	status = (struct tsn_qbv_entry *)malloc(MAX_ENTRY_SIZE);
 	if (status == NULL) {
 		loge("malloc space error.\n");
+		free(conf);
 		return -1;
 	}
 
@@ -793,4 +794,16 @@ int fill_dscp_set(char *portname, bool disable, int index, int cos, int dpl)
 	dscp_conf.cos = cos;
 	dscp_conf.dpl = dpl;
 	return tsn_dscp_set(portname, disable, index, &dscp_conf);
+}
+
+int fill_pcp_map(char *portname, int pcp, int dei, int cos, int dpl)
+{
+	struct tsn_qos_switch_pcp_conf pcp_conf;
+
+	memset(&pcp_conf, 0, sizeof(struct tsn_qos_switch_pcp_conf));
+	pcp_conf.pcp = pcp;
+	pcp_conf.dei = dei;
+	pcp_conf.cos = cos;
+	pcp_conf.dpl = dpl;
+	return tsn_pcp_map(portname, &pcp_conf);
 }

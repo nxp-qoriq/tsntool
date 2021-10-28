@@ -46,4 +46,5 @@ int fill_cbgen_set(char *portname, uint32_t index, uint8_t iport_mask, uint8_t s
 int fill_cbrec_set(char *portname, uint32_t index, uint8_t seq_len, uint8_t his_len, bool rtag_pop_en);
 int fill_cbstatus_get(char *portname, int32_t index);
 int fill_dscp_set(char *portname, bool disable, int index, int cos, int dpl);
+int fill_pcp_map(char *portname, int pcp, int dei, int cos, int dpl);
 #endif
