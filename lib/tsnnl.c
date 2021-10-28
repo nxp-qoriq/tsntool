@@ -1887,3 +1887,48 @@ int tsn_dscp_set(char *portname, bool disable, int index,
 
 	return ret;
 }
+
+int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
+{
+	struct msgtemplate *msg;
+	struct nlattr *pcpattr;
+	int ret;
+
+	if (portname == NULL)
+		return -EINVAL;
+
+	msg = tsn_send_cmd_prepare(TSN_CMD_PCPMAP_SET);
+	if (msg == NULL) {
+		lloge("fail to allocate genl msg.\n");
+		return -ENOMEM;
+	}
+
+	tsn_send_cmd_append_attr(msg, TSN_ATTR_IFNAME, portname, strlen(portname) + 1);
+
+
+	pcpattr = tsn_nla_nest_start(msg, TSN_ATTR_PCPMAP);
+	if (!pcpattr)
+		return -EINVAL;
+
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_PCP, &pcp_conf->pcp, sizeof(pcp_conf->pcp));
+
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_DEI, &pcp_conf->dei, sizeof(pcp_conf->dei));
+
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_COS, &(pcp_conf->cos), sizeof(pcp_conf->cos));
+
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_DPL, &(pcp_conf->dpl), sizeof(pcp_conf->dpl));
+
+	tsn_nla_nest_end(msg, pcpattr);
+
+	ret = tsn_send_to_kernel(msg);
+	if (ret < 0) {
+		lloge("genl send to kernel error\n");
+		return ret;
+	}
+
+	ret = tsn_msg_recv_analysis(NULL, NULL);
+	if (ret >= 0 && get_conf_monitor_status())
+		create_record(portname, TSN_CMD_PCPMAP_SET, 0);
+
+	return ret;
+}

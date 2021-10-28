@@ -445,6 +445,7 @@ int tsn_cbstatus_get(char *portname, uint32_t index,
 		     struct tsn_cb_status *cbstat);
 int tsn_dscp_set(char *portname, bool disable, int index,
 		 struct tsn_qos_switch_dscp_conf *dscp_conf);
+int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf);
 int64_t pctns(struct timespec *t);
 int get_net_ifindex_by_name(const char *eth_name, uint32_t *ifindex);
 int set_period_alarm(uint64_t ts, uint64_t offset,
