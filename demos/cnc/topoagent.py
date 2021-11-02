@@ -30,7 +30,11 @@ async def set_device_name():
     return (0);
 
 async def get_interfaces():
-    pinterfaces = subprocess.Popen('lldpcli -d show -f json interfaces ports swp0,swp1,swp2,swp3 details', \
+    ports = subprocess.Popen("ls -l /sys/class/net/ | grep -v 'virtual\|can\|eno2' |  awk -F' ' '{print$9}' | grep -v '^$' | tr '\n' ','", \
+            shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
+    portstr = ports.stdout.read().decode('utf-8');
+    cmd = "lldpcli -d show -f json0 interfaces ports %s details"%(portstr);
+    pinterfaces = subprocess.Popen(cmd, \
         shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
     interfaces = pinterfaces.stdout.read().decode('utf-8');
     return (interfaces);
@@ -38,7 +42,12 @@ async def get_interfaces():
 glinks = [];
 async def get_neighbors():
     global glinks;
-    pneighbors = subprocess.Popen('lldpcli -d show -f json0 neighbors ports swp0,swp1,swp2,swp3 details', \
+
+    ports = subprocess.Popen("ls -l /sys/class/net/ | grep -v 'virtual\|can\|eno2' | awk -F' ' '{print$9}' | grep -v '^$' | tr '\n' ','", \
+            shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
+    portstr = ports.stdout.read().decode('utf-8');
+    cmd = "lldpcli -d show -f json0 neighbors ports %s details"%(portstr);
+    pneighbors = subprocess.Popen(cmd, \
             shell = True, stdout =subprocess.PIPE, stderr=subprocess.STDOUT);
     neighbors = pneighbors.stdout.read().decode('utf-8');
     dneighbors = json.loads(neighbors);
