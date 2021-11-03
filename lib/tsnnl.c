@@ -1889,7 +1889,7 @@ int tsn_dscp_set(char *portname, bool disable, int index,
 }
 
 #ifdef TSN_PCP_ATTR_MAX
-int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
+int tsn_pcp_map(char *portname, u8 pcp, u8 dei, u8 cos, u8 dpl)
 {
 	struct msgtemplate *msg;
 	struct nlattr *pcpattr;
@@ -1911,13 +1911,13 @@ int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
 	if (!pcpattr)
 		return -EINVAL;
 
-	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_PCP, &pcp_conf->pcp, sizeof(pcp_conf->pcp));
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_PCP, &pcp, sizeof(pcp));
 
-	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_DEI, &pcp_conf->dei, sizeof(pcp_conf->dei));
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_DEI, &dei, sizeof(dei));
 
-	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_COS, &(pcp_conf->cos), sizeof(pcp_conf->cos));
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_COS, &cos, sizeof(cos));
 
-	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_DPL, &(pcp_conf->dpl), sizeof(pcp_conf->dpl));
+	tsn_send_cmd_append_attr(msg, TSN_PCP_ATTR_DPL, &dpl, sizeof(dpl));
 
 	tsn_nla_nest_end(msg, pcpattr);
 
@@ -1934,7 +1934,7 @@ int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
 	return ret;
 }
 #else
-int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
+int tsn_pcp_map(char *portname, u8 pcp, u8 dei, u8 cos, u8 dpl)
 {
 	return -EOPNOTSUPP;
 }

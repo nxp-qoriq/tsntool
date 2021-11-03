@@ -798,12 +798,5 @@ int fill_dscp_set(char *portname, bool disable, int index, int cos, int dpl)
 
 int fill_pcp_map(char *portname, int pcp, int dei, int cos, int dpl)
 {
-	struct tsn_qos_switch_pcp_conf pcp_conf;
-
-	memset(&pcp_conf, 0, sizeof(struct tsn_qos_switch_pcp_conf));
-	pcp_conf.pcp = pcp;
-	pcp_conf.dei = dei;
-	pcp_conf.cos = cos;
-	pcp_conf.dpl = dpl;
-	return tsn_pcp_map(portname, &pcp_conf);
+	return tsn_pcp_map(portname, pcp, dei, cos, dpl);
 }
