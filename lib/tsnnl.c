@@ -1888,6 +1888,7 @@ int tsn_dscp_set(char *portname, bool disable, int index,
 	return ret;
 }
 
+#ifdef TSN_PCP_ATTR_MAX
 int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
 {
 	struct msgtemplate *msg;
@@ -1932,3 +1933,9 @@ int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
 
 	return ret;
 }
+#else
+int tsn_pcp_map(char *portname, struct tsn_qos_switch_pcp_conf *pcp_conf)
+{
+	return -EOPNOTSUPP;
+}
+#endif
