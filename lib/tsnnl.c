@@ -23,18 +23,18 @@ struct linkpara tsn_cap_para[TSN_CAP_ATTR_MAX + 1] = {
 };
 
 struct linkpara qbv_base[TSN_QBV_ATTR_MAX + 1] = {
-	[TSN_QBV_ATTR_CONFIGCHANGE]			= {0,0,0},
-	[TSN_QBV_ATTR_GRANULARITY]			= {0,0,0},
-	[TSN_QBV_ATTR_CONFIGCHANGEERROR]	= {0,0,0},
-	[TSN_QBV_ATTR_ADMINENTRY]   		= { NLA_NESTED, 1, "admin"},
-	[TSN_QBV_ATTR_OPERENTRY] 			= { NLA_NESTED, 1, "oper"},
-	[TSN_QBV_ATTR_ENABLE] 				= { NLA_FLAG, 2, "enable"},
-	[TSN_QBV_ATTR_DISABLE] 				= { NLA_FLAG, 2 , "disable"},
-	[TSN_QBV_ATTR_CONFIGCHANGETIME] 	= { NLA_U64, 2, "configchangetime"},
-	[TSN_QBV_ATTR_MAXSDU] 				= { NLA_U32, 2, "maxsdu"},
-	[TSN_QBV_ATTR_CURRENTTIME] 			= { NLA_U64, 2, "currenttime"},
-	[TSN_QBV_ATTR_CONFIGPENDING] 		= { NLA_FLAG, 2, "configpending"},
-	[TSN_QBV_ATTR_LISTMAX] 				= { NLA_U32, 2, "listmax"},
+	[TSN_QBV_ATTR_CONFIGCHANGE]		= {0, 0, {0}},
+	[TSN_QBV_ATTR_GRANULARITY]		= {0, 0, {0}},
+	[TSN_QBV_ATTR_CONFIGCHANGEERROR]	= {0, 0, {0}},
+	[TSN_QBV_ATTR_ADMINENTRY]   		= {NLA_NESTED, 1, "admin"},
+	[TSN_QBV_ATTR_OPERENTRY] 		= {NLA_NESTED, 1, "oper"},
+	[TSN_QBV_ATTR_ENABLE] 			= {NLA_FLAG, 2, "enable"},
+	[TSN_QBV_ATTR_DISABLE] 			= {NLA_FLAG, 2 , "disable"},
+	[TSN_QBV_ATTR_CONFIGCHANGETIME] 	= {NLA_U64, 2, "configchangetime"},
+	[TSN_QBV_ATTR_MAXSDU] 			= {NLA_U32, 2, "maxsdu"},
+	[TSN_QBV_ATTR_CURRENTTIME] 		= {NLA_U64, 2, "currenttime"},
+	[TSN_QBV_ATTR_CONFIGPENDING] 		= {NLA_FLAG, 2, "configpending"},
+	[TSN_QBV_ATTR_LISTMAX] 			= {NLA_U32, 2, "listmax"},
 };
 
 struct linkpara qbv_ctrl[TSN_QBV_ATTR_CTRL_MAX + 1] = {
@@ -43,7 +43,7 @@ struct linkpara qbv_ctrl[TSN_QBV_ATTR_CTRL_MAX + 1] = {
 	[TSN_QBV_ATTR_CTRL_CYCLETIME]		= {NLA_U32, 2, "cycletime"},
 	[TSN_QBV_ATTR_CTRL_CYCLETIMEEXT]	= {NLA_U32, 2, "cycletimeext" },
 	[TSN_QBV_ATTR_CTRL_BASETIME]		= {NLA_U64, 2, "basetime" },
-	[TSN_QBV_ATTR_CTRL_LISTENTRY]		= {NLA_NESTED + __NLA_TYPE_MAX, 1 , "list"},
+	[TSN_QBV_ATTR_CTRL_LISTENTRY]		= {NLA_NESTED + __NLA_TYPE_MAX, 1, "list"},
 };
 
 struct linkpara qbv_entry[TSN_QBV_ATTR_ENTRY_MAX + 1] = {
@@ -185,9 +185,8 @@ static void get_tsn_cap_para_from_json(cJSON *json, void *para)
 {
 	cJSON *item;
 	struct tsn_cap *cap;
-	int index;
 
-	cap = (struct tsn_cap_para *)para;
+	cap = (struct tsn_cap *)para;
 
 	item = cJSON_GetObjectItem(json, tsn_cap_para[TSN_CAP_ATTR_QBV].name);
 	if (item)
@@ -255,6 +254,7 @@ void get_para_from_json(int type, cJSON *json, void *para)
 		break;
 	case TSN_ATTR_CAP:
 		get_tsn_cap_para_from_json(json, para);
+		break;
 	case TSN_ATTR_QCI_SP:
 		get_qci_cap_para_from_json(json, para);
 		break;
@@ -408,12 +408,12 @@ int get_tsn_record(struct tsn_conf_record *record)
 #else
 bool conf_monitor_switch = false;
 
-int get_tsn_record(struct tsn_conf_record *record)
+int get_tsn_record(UNUSED struct tsn_conf_record *record)
 {
 	return -1;
 }
 
-void create_record(char *portname, int cmd, uint32_t index)
+void create_record(UNUSED char *portname, UNUSED int cmd, UNUSED uint32_t index)
 {
 }
 #endif
@@ -433,7 +433,6 @@ bool get_conf_monitor_status(void)
 int tsn_capability_get(char *portname, struct tsn_cap *cap)
 {
 	struct msgtemplate *msg;
-	struct nlattr *stream_para_attr;
 	int ret;
 	struct showtable stream_para;
 
@@ -459,16 +458,13 @@ int tsn_capability_get(char *portname, struct tsn_cap *cap)
 	/* TODO: receive the feedback and return */
 	stream_para.type = TSN_CMD_CAP_GET;
 	stream_para.len1 = TSN_CAP_ATTR_MAX;
-	stream_para.link1 = &tsn_cap_para;
+	stream_para.link1 = tsn_cap_para;
 	stream_para.len2 = 0;
 	stream_para.link2 = 0;
 	stream_para.len3 = 0;
 	stream_para.link3 = 0;
-	return tsn_msg_recv_analysis(&stream_para, (void *)cap);
 
-err:
-	free(msg);
-	return ret;
+	return tsn_msg_recv_analysis(&stream_para, (void *)cap);
 }
 
 /* tsn_qci_streampara_get()
@@ -482,7 +478,6 @@ int tsn_qci_streampara_get(char *portname,
 				      struct tsn_qci_psfp_stream_param *sp)
 {
 	struct msgtemplate *msg;
-	struct nlattr *stream_para_attr;
 	int ret;
 	struct showtable stream_para;
 
@@ -507,16 +502,13 @@ int tsn_qci_streampara_get(char *portname,
 	/* TODO: receive the feedback and return */
 	stream_para.type = TSN_ATTR_QCI_SP;
 	stream_para.len1 = TSN_QCI_STREAM_ATTR_MAX;
-	stream_para.link1 = &qci_stream_para;
+	stream_para.link1 = qci_stream_para;
 	stream_para.len2 = 0;
 	stream_para.link2 = 0;
 	stream_para.len3 = 0;
 	stream_para.link3 = 0;
-	return tsn_msg_recv_analysis(&stream_para, (void *)sp);
 
-err:
-	free(msg);
-	return ret;
+	return tsn_msg_recv_analysis(&stream_para, (void *)sp);
 }
 
 
@@ -676,7 +668,7 @@ int tsn_cb_streamid_get(char *portname, uint32_t sid_index, struct tsn_cb_stream
 	/* TODO : fill the sid */
 	streamidget.type = TSN_ATTR_STREAM_IDENTIFY;
 	streamidget.len1 = TSN_STREAMID_ATTR_MAX;
-	streamidget.link1 = &cb_streamid;
+	streamidget.link1 = cb_streamid;
 	streamidget.len2 = 0;
 	streamidget.len3 = 0;
 	return tsn_msg_recv_analysis(&streamidget, (void *)sid);
@@ -831,7 +823,7 @@ int tsn_qci_psfp_sfi_get(char *portname, uint32_t sfi_handle,
 	/* TODO: receive the feedback and return */
 	sfiget.type = TSN_ATTR_QCI_SFI;
 	sfiget.len1 = TSN_QCI_SFI_ATTR_MAX;
-	sfiget.link1 = &qci_sfi;
+	sfiget.link1 = qci_sfi;
 	sfiget.len2 = 0;
 	sfiget.len3 = 0;
 	return tsn_msg_recv_analysis(&sfiget, (void *)sfi);
@@ -1017,7 +1009,6 @@ out2:
 	ret = tsn_send_to_kernel(msg);
 	if (ret < 0) {
 		lloge("genl send to kernel error\n");
-		free(msg);
 		return ret;
 	}
 
@@ -1063,9 +1054,9 @@ int tsn_qci_psfp_sgi_get(char *portname, uint32_t sgi_handle, struct tsn_qci_psf
 	/* TODO: receive the feedback and return */
 	sgiget.type = TSN_ATTR_QCI_SGI;
 	sgiget.len1 = TSN_QCI_SGI_ATTR_MAX;
-	sgiget.link1 = &qci_sgi;
+	sgiget.link1 = qci_sgi;
 	sgiget.len2 = TSN_SGI_ATTR_CTRL_MAX;
-	sgiget.link2 = &qci_sgi_ctrl;
+	sgiget.link2 = qci_sgi_ctrl;
 	sgiget.len3 = TSN_SGI_ATTR_GCL_MAX;
 	sgiget.link3 = qci_sgi_gcl;
 	return tsn_msg_recv_analysis(&sgiget, (void *)sgi);
@@ -1110,9 +1101,9 @@ int tsn_qci_psfp_sgi_status_get(char *portname, uint32_t sgi_handle, struct tsn_
 	/* TODO: receive the feedback and return */
 	sgiget.type = TSN_ATTR_QCI_SGI;
 	sgiget.len1 = TSN_QCI_SGI_ATTR_MAX;
-	sgiget.link1 = &qci_sgi;
+	sgiget.link1 = qci_sgi;
 	sgiget.len2 = TSN_SGI_ATTR_CTRL_MAX;
-	sgiget.link2 = &qci_sgi_ctrl;
+	sgiget.link2 = qci_sgi_ctrl;
 	sgiget.len3 = TSN_SGI_ATTR_GCL_MAX;
 	sgiget.link3 = qci_sgi_gcl;
 	return tsn_msg_recv_analysis(&sgiget, (void *)sgi);
@@ -1233,7 +1224,7 @@ int tsn_qci_psfp_fmi_get(char *portname, uint32_t fmi_id, struct tsn_qci_psfp_fm
 
 	linkfmi.type = TSN_ATTR_QCI_FMI; 
 	linkfmi.len1 = TSN_QCI_FMI_ATTR_MAX;
-	linkfmi.link1 = &qci_fmi;
+	linkfmi.link1 = qci_fmi;
 	return tsn_msg_recv_analysis(&linkfmi, (void *)fmiconf);
 
 err:
@@ -1393,11 +1384,11 @@ int tsn_qos_port_qbv_get(char *portname, struct tsn_qbv_conf *qbvconf)
 	/* TODO save to tsn_qbv_conf and admin list */
 	qbvget.type = TSN_ATTR_QBV;
 	qbvget.len1 = TSN_QBV_ATTR_MAX;
-	qbvget.link1 = &qbv_base;
+	qbvget.link1 = qbv_base;
 	qbvget.len2 = TSN_QBV_ATTR_CTRL_MAX;
-	qbvget.link2 = &qbv_ctrl;
+	qbvget.link2 = qbv_ctrl;
 	qbvget.len3 = TSN_QBV_ATTR_ENTRY_MAX;
-	qbvget.link3 = &qbv_entry;
+	qbvget.link3 = qbv_entry;
 
 	return tsn_msg_recv_analysis(&qbvget, (void *)qbvconf);
 }
@@ -1427,11 +1418,11 @@ int tsn_qos_port_qbv_status_get(char *portname, struct tsn_qbv_status *qbvstatus
 	/* TODO save to struct tsn_qbv_status and oper list */
 	qbvget.type = TSN_ATTR_QBV;
 	qbvget.len1 = TSN_QBV_ATTR_MAX;
-	qbvget.link1 = &qbv_base;
+	qbvget.link1 = qbv_base;
 	qbvget.len2 = TSN_QBV_ATTR_CTRL_MAX;
-	qbvget.link2 = &qbv_ctrl;
+	qbvget.link2 = qbv_ctrl;
 	qbvget.len3 = TSN_QBV_ATTR_ENTRY_MAX;
-	qbvget.link3 = &qbv_entry;
+	qbvget.link3 = qbv_entry;
 
 	return tsn_msg_recv_analysis(&qbvget, (void *)qbvstatus);
 }
@@ -1656,7 +1647,7 @@ int tsn_qbu_get_status(char *portname, struct tsn_preempt_status *pts)
 
 	qbuget.type = TSN_ATTR_QBU;
 	qbuget.len1 = TSN_QBU_ATTR_MAX;
-	qbuget.link1 = &qbu_get;
+	qbuget.link1 = qbu_get;
 
 	return tsn_msg_recv_analysis(&qbuget, (void *)pts);
 }
@@ -1831,7 +1822,7 @@ int tsn_cbstatus_get(char *portname, uint32_t index,
 	/* TODO: receive the feedback and return */
 	cbstatget.type = TSN_ATTR_CBSTAT;
 	cbstatget.len1 = TSN_CBSTAT_ATTR_MAX;
-	cbstatget.link1 = &cb_get;
+	cbstatget.link1 = cb_get;
 	cbstatget.len2 = 0;
 	cbstatget.len3 = 0;
 	return tsn_msg_recv_analysis(&cbstatget, (void *)cbstat);

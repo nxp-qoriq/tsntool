@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 		default:
 			run = 1;
 			optind = 0;
-			optarg = EOF;
+			optarg = (char *)EOF;
 
 			break;
 		}

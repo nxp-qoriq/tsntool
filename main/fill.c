@@ -349,7 +349,6 @@ qbvset:
 
 int fill_qbv_get(char *portname)
 {
-	//uint32_t count = 0;
 	struct tsn_qbv_entry *conf, *status;
 	struct tsn_qbv_conf qbvconf;
 	struct tsn_qbv_status qbvstatus;
@@ -379,19 +378,10 @@ int fill_qbv_get(char *portname)
 	memset(&qbvconf, 0, sizeof(struct tsn_qbv_conf));
 	memset(&qbvstatus, 0, sizeof(struct tsn_qbv_status));
 
-	//count = MAX_ENTRY_SIZE / sizeof(struct tsn_qbv_entry);
-
-#if 0
-	ret = tsn_qos_port_qbv_get(portname, &qbvconf);
-	if (ret < 0) {
-		loge("got error in tsn_qos_port_qbv_get");
-		goto err;
-	}
-#endif
 	ret = tsn_qos_port_qbv_status_get(portname, &qbvstatus);
 
 	/* TODO: show qbvconf qbvstatus data */
-err:
+
 	free(conf);
 	free(status);
 	return ret;
