@@ -1273,6 +1273,11 @@ int tsn_qos_port_qbv_set(char *portname, struct tsn_qbv_conf *adminconf, bool en
 	if (adminconf->config_change)
 		tsn_send_cmd_append_attr(msg, TSN_QBV_ATTR_CONFIGCHANGE, &(adminconf->config_change), 0);
 
+	if (adminconf->maxsdu)
+		tsn_send_cmd_append_attr(msg, TSN_QBV_ATTR_MAXSDU,
+					 &adminconf->maxsdu,
+					 sizeof(adminconf->maxsdu));
+
 	qbvadmin = tsn_nla_nest_start(msg, TSN_QBV_ATTR_ADMINENTRY);
 	if (!qbvadmin)
 		return -EINVAL;
