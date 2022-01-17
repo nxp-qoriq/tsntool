@@ -414,7 +414,7 @@ static inline int is_hex_oct(char *str)
 	}
 
 	while (*str != '\0') {
-		if (*str <= '9' && *str >= '0' || *str == '.') {
+		if ((*str <= '9' && *str >= '0') || *str == '.') {
 			str++;
 			continue;
 		} else {
@@ -478,7 +478,7 @@ int cli_cmd_tsn_cap_get(UNUSED int argc, UNUSED char *argv[],
 		) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -523,7 +523,7 @@ int cli_cmd_qci_cap_get(UNUSED int argc, UNUSED char *argv[],
 		) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -588,7 +588,7 @@ int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:f:hm:cb:eqy:x:", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -754,7 +754,7 @@ int cli_cmd_qbv_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -816,7 +816,7 @@ int cli_cmd_qci_sfi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:eqi:s:p:g:u:f:ovh", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -927,7 +927,7 @@ int cli_cmd_qci_sfi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1010,7 +1010,7 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 			 long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1089,8 +1089,8 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 				mac = strtoull(optarg, NULL, ret);
 			} else {
 				char temp[25];
-				snprintf(temp, 25, "%s\0", optarg);
-				sscanf(temp, "%2hx:%2hx:%2hx:%2hx:%2hx:%2hx",
+				snprintf(temp, 25, "%s", optarg);
+				sscanf(temp, "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx",
 						&smac[0], &smac[1], &smac[2], &smac[3], &smac[4], &smac[5]);
 				mac = 0;
 				for (i = 0; i < 6; i++)
@@ -1118,8 +1118,8 @@ int cli_cmd_streamid_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 				mac = strtoull(optarg, NULL, ret);
 			} else {
 				char temp[25];
-				snprintf(temp, 25, "%s\0", optarg);
-				sscanf(temp, "%2hx:%2hx:%2hx:%2hx:%2hx:%2hx",
+				snprintf(temp, 25, "%s", optarg);
+				sscanf(temp, "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx",
 						&smac[0], &smac[1], &smac[2], &smac[3], &smac[4], &smac[5]);
 				mac = 0;
 				for (i = 0; i < 6; i++)
@@ -1210,7 +1210,7 @@ int cli_cmd_streamid_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1282,7 +1282,7 @@ int cli_cmd_qci_sgi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 			 long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1402,7 +1402,7 @@ int cli_cmd_qci_sgi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 
 		printf("No --gatelistfile, Do you want to edit list file(Y/N)N? ");
 		ch = getchar();
-		printf("\n Gate list length would be 0.\n\n", ch);
+		printf("\n Gate list length would be 0.\n\n");
 		if ((ch == 'Y') || (ch == 'y')) {
 			listtable = readinput(sglentry_example, NULL, stdout);
 			if (listtable == NULL) {
@@ -1459,7 +1459,7 @@ int cli_cmd_qci_sgi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1527,7 +1527,7 @@ int cli_cmd_qci_fmi_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 			 long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1625,7 +1625,7 @@ int cli_cmd_qci_fmi_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumb
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1721,7 +1721,7 @@ int cli_cmd_cbs_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:t:p:a:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1807,7 +1807,7 @@ int cli_cmd_cbs_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1864,7 +1864,7 @@ int cli_cmd_tsd_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:p:f:ieqh", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1925,7 +1925,6 @@ void cmd_tsd_get_help(void)
 int cli_cmd_tsd_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 {
 	int c;
-	int ret;
 	int device = 0;
 	struct option *long_options = &cli_commands[cmdnumber].long_options[0];
 	int option_index = 0;
@@ -1936,7 +1935,7 @@ int cli_cmd_tsd_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -1982,7 +1981,7 @@ int cli_cmd_qbu_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:p:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2031,7 +2030,7 @@ int cli_cmd_qbu_get_status(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdn
 	while ((c = getopt_long(argc, argv, "d:p:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2084,7 +2083,7 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:l:t:c:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2098,9 +2097,9 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 			loopcount = strtoul(optarg, NULL, 0);
 			break;
 		case 's':
-			snprintf(smac, 25, "%s\0", optarg);
+			snprintf(smac, 25, "%s", optarg);
 			logv("source mac is %s\n", smac);
-			sscanf(smac, "%d:%d:%d:%d:%d:%d", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+			sscanf(smac, "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
 			break;
 		case 'h':
 			cmd_sendip_help();
@@ -2128,7 +2127,8 @@ int cli_sendip(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 		char str[10];
 
 		sprintf(str, "%d", length);
-		printf("length is %d\n", length);
+		printf("length is %d, timeint=%d, loopcount=%d\n",
+		       length, timeint, loopcount);
 		execlp("./sendpkt", "./sendpkt", " -i ", portname, " -l ", str, " -m ", smac, (char *)0);
 		printf("sendpkt error\n");
 		exit(0);
@@ -2194,7 +2194,7 @@ int cli_regtool(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	fflush(stdout);
 
 	virt_addr = map_base + (target & MAP_MASK);
-	printf("PCI Memory mapped access 0x %08X.\n", (uint32_t) virt_addr);
+	printf("PCI Memory mapped access 0x %08lX.\n", (unsigned long)virt_addr);
 	switch (access_type) {
 	case 'b':
 		read_result = *((uint8_t *) virt_addr);
@@ -2266,7 +2266,7 @@ int cli_cmd_ct_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:q:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2326,7 +2326,7 @@ int cli_cmd_cbgen_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber
 	while ((c = getopt_long(argc, argv, "d:h:i:p:s:l:n", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2409,7 +2409,7 @@ int cli_cmd_cbrec_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber
 	while ((c = getopt_long(argc, argv, "d:h:i:l:s:r", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2475,7 +2475,7 @@ int cli_cmd_cbstatus_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnum
 	while ((c = getopt_long(argc, argv, "d:i:h", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2533,7 +2533,7 @@ int cli_cmd_dscp_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:hui:c:p:", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;
@@ -2602,7 +2602,7 @@ int cli_cmd_pcp_map(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	while ((c = getopt_long(argc, argv, "d:h:p:e:c:l:", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 'd':
-			snprintf(portname, IF_NAMESIZE, "%s\0", optarg);
+			snprintf(portname, IF_NAMESIZE, "%s", optarg);
 			logv("device is %s\n", portname);
 			device = 1;
 			break;

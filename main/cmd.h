@@ -53,4 +53,5 @@ int cli_cmd_cbrec_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber
 int cli_cmd_cbstatus_get(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber);
 int cli_cmd_dscp_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber);
 int cli_cmd_pcp_map(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber);
+int testptp(int argc, char *argv[]);
 #endif

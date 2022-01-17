@@ -24,11 +24,14 @@
 #define NETLINK_LISTEN_ALL_NSID 8
 #endif
 
+#ifndef UNUSED
+#define UNUSED __attribute__((__unused__))
+#endif
+
 typedef unsigned char u8;
 typedef unsigned int u32;
 typedef unsigned short u16;
 
-#define ptptime_t uint64_t
 #define NUM_THREADS 100
 
 #include <linux/tsn.h>

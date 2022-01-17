@@ -34,13 +34,13 @@ int testptp(int argc, char *argv[])
 	struct timespec ts;
 
 	char *pname;
-	int c, cnt, fd;
+	int c, fd;
 
 	char *device = DEVICE;
 	clockid_t clkid;
 
 	optind = 0;
-	optarg = EOF;
+	optarg = (char *)EOF;
 
 	pname = strrchr(argv[0], '/');
 
@@ -63,7 +63,7 @@ int testptp(int argc, char *argv[])
 		}
 	}
 	optind = 0;
-	optarg = EOF;
+	optarg = (char *)EOF;
 
 	fd = open(device, O_RDWR);
 	if (fd < 0) {

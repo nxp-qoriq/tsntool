@@ -11,6 +11,7 @@
 #include <netlink/netlink.h>
 #include <linux/genetlink.h>
 #include <netlink/genl/genl.h>
+#include <netlink/genl/ctrl.h>
 #include <pthread.h>
 #include <sched.h>
 
@@ -99,15 +100,19 @@ int set_period_alarm(uint64_t ts, uint64_t offset, uint64_t cycle,
 		now.tv_sec = ts/1000000000ULL;
 		now.tv_nsec = ts - ts/1000000000ULL*1000000000ULL;
 	}
+
+	return 0;
 }
 
-void alarm_thread(void *data)
+void *alarm_thread(void *data)
 {
 	struct alarm_node *msg = (struct alarm_node *)data;
 
 	set_realtime(pthread_self(), 1, 0);
 
 	set_period_alarm(msg->ts, msg->offset, msg->cycle, msg->callback_func, msg->data);
+
+	return NULL;
 }
 
 int create_alarm_thread(uint64_t ts, uint32_t offset, uint32_t cycle,
@@ -359,11 +364,11 @@ static int tsn_multicast_cb(struct nl_msg *msg, void *data)
 				nla_for_each_attr(nla, payload, nlalen, remain) {
 					if (nla->nla_type == TSN_QBV_ATTR_CTRL_BASETIME) {
 						cctime = nla_get_u64(nla);
-						printf("got configchangetime %lld\n", cctime);
+						printf("got configchangetime %ld\n", cctime);
 					}
 					if (nla->nla_type == TSN_QBV_ATTR_CTRL_CYCLETIME) {
 						cytime = nla_get_u32(nla);
-						printf("got cycle time %ld\n", cytime);
+						printf("got cycle time %d\n", cytime);
 					}
 					if (nla->nla_type == TSN_QBV_ATTR_ENABLE + TSN_QBV_ATTR_CTRL_MAX) {
 						enable = 1;

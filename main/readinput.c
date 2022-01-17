@@ -39,7 +39,7 @@ extern struct cli_options *opts;
 char *cmd_generator(const char *text, int state)
 {
 	static int list_index, len;
-	char *name;
+	const char *name;
 
 	/*
 	 * If this is a new word to complete, initialize now.  This includes
@@ -66,7 +66,7 @@ char *cmd_generator(const char *text, int state)
 char *para_generator(const char *text, int state)
 {
 	static int list_index, len;
-	char *name;
+	const char *name;
 	static int cmdnumber;
 
 	/* If this is a new word to complete, initialize now.  This includes
@@ -285,7 +285,7 @@ char *readinput(const char *instruction, const char *tmpfile, FILE *output)
 		}
 
 		ret = write(tmpfd, input, strlen(input));
-		if (ret < strlen(input)) {
+		if (ret < (int)strlen(input)) {
 			ERROR("readinput", "Failed to write the content into a temp file (%s).", strerror(errno));
 			goto fail;
 		}
@@ -293,7 +293,7 @@ char *readinput(const char *instruction, const char *tmpfile, FILE *output)
 	} else {
 		if (old_content != NULL) {
 			ret = write(tmpfd, old_content, strlen(old_content));
-			if (ret < strlen(old_content)) {
+			if (ret < (int)strlen(old_content)) {
 				ERROR("readinput", "Failed to write the previous content (%s).", strerror(errno));
 				goto fail;
 			}
@@ -302,7 +302,7 @@ char *readinput(const char *instruction, const char *tmpfile, FILE *output)
 			ret = write(tmpfd, "\n#Example entry:\n", 7);
 			ret += write(tmpfd, instruction, strlen(instruction));
 			ret += write(tmpfd, "\n#End Example\n", 5);
-			if (ret < 6+strlen(instruction)+5) {
+			if (ret < (int)(6 + strlen(instruction) + 5)) {
 				ERROR("readinput", "Failed to write the instruction (%s).", strerror(errno));
 				goto fail;
 			}
@@ -376,7 +376,7 @@ char *readinput(const char *instruction, const char *tmpfile, FILE *output)
 				}
 				lseek(tmpfd, 0, SEEK_SET);
 				ret = write(tmpfd, input, strlen(input));
-				if (ret < strlen(input)) {
+				if (ret < (int)strlen(input)) {
 					ERROR("readinput", "Failed to write to the temporary file (%s).", strerror(errno));
 					goto fail;
 				}
