@@ -64,6 +64,18 @@
 var portname = window.parent.deviceport;
 var enable = 'false';
 var preemptset = {};
+var devname = window.parent.devicename;
+
+function tabledisplay()
+{
+	var tc_num = 8;
+
+	if (devname.indexOf("imx8mp") >= 0)
+		tc_num = 5;
+
+	for (var i = 0; i < tc_num; i++)
+		document.getElementById("tc"+i).style.display="block";
+}
 
 function selectpreempt()
 {
@@ -146,39 +158,36 @@ function confirmset()
 <input class="button addlist" type="radio" name="enable" value="true" onclick="selectenable()">enable
 <input class="button addlist" type="radio" name="enable" value="false" onclick="selectenable()" checked="checked">disable
 <br>&nbsp;&nbsp;
-<br>TC0</b>
-<input class="button addlist" type="radio" name="tc0" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc0" value="express" onclick="selectpreempt()"  checked="checked">express
-<b>
-<br>TC1</b>
-<input class="button addlist" type="radio" name="tc1" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc1" value="express" onclick="selectpreempt()"  checked="checked">express
-<b>
-<br>TC2</b>
-<input class="button addlist" type="radio" name="tc2" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc2" value="express" onclick="selectpreempt()"  checked="checked">express
-<b>
-<br>TC3</b>
-<input class="button addlist" type="radio" name="tc3" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc3" value="express" onclick="selectpreempt()"  checked="checked">express
-<b>
-<br>TC4</b>
-<input class="button addlist" type="radio" name="tc4" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc4" value="express" onclick="selectpreempt()"  checked="checked">express
-<b>
-<br>TC5</b>
-<input class="button addlist" type="radio" name="tc5" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc5" value="express" onclick="selectpreempt()"  checked="checked">express
-<b>
-<br>TC6</b>
-<input class="button addlist" type="radio" name="tc6" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc6" value="express" onclick="selectpreempt()"  checked="checked">express
-<b>
-<br>TC7</b>
-<input class="button addlist" type="radio" name="tc7" value="preemptable" onclick="selectpreempt()">preemptable
-<input class="button addlist" type="radio" name="tc7" value="express" onclick="selectpreempt()"  checked="checked">express
+<table>
+	<tr id="tc0" style="display: block;">
+		<td><b>TC0</b><input class="button addlist" type="radio" name="tc0" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc0" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr>
+	<tr id="tc1" style="display: none;">
+		<td><b>TC1</b><input class="button addlist" type="radio" name="tc1" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc1" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr>
+	<tr id="tc2" style="display: none;">
+		<td><b>TC2</b><input class="button addlist" type="radio" name="tc2" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc2" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr>
+	<tr id="tc3" style="display: none;">
+		<td><b>TC3</b><input class="button addlist" type="radio" name="tc3" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc3" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr>
+	<tr id="tc4"style="display: none;">
+		<td><b>TC4</b><input class="button addlist" type="radio" name="tc4" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc4" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr>
+	<tr id="tc5" style="display: none;">
+		<td><b>TC5</b><input class="button addlist" type="radio" name="tc5" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc5" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr>
+	<tr id="tc6" style="display: none;">
+		<td><b>TC6</b><input class="button addlist" type="radio" name="tc6" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc6" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr>
+	<tr id="tc7" style="display: none;">
+		<td><b>TC7</b><input class="button addlist" type="radio" name="tc7" value="preemptable" onclick="selectpreempt()">preemptable</td>
+		<td><input class="button addlist" type="radio" name="tc7" value="express" onclick="selectpreempt()"  checked="checked">express</td></tr></table>
 <br><br><br><b>
 <input class="button device confirm" type="button" name="confirm" id="confirm" onclick="confirmset()" value="Yes, confirm">
+<script>
+	tabledisplay();
+</script>
 </form>
 </div>
 </body>

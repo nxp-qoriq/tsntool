@@ -210,15 +210,37 @@ function reselect()
 function addtsnset() {
 	var btport = "<div id=\"aconfig\" style=\"top:0;bottom:0;float:left;overflow-x：scroll;width:100%;border:1px solid #000;\"> \
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \
-			<select class=\"button\" id=\"tsnprotocol\" name=\"tsnprotocol\" onchange=\"reselect()\"> \
-			<option value=\"qbv\" selected>qbv</option> \
+			<select class=\"button\" id=\"tsnprotocol\" name=\"tsnprotocol\" onchange=\"reselect()\">" ;
+
+	if (devicename.indexOf("ls1028") >= 0) {
+		btport += "<option value=\"qbv\" selected>qbv</option> \
+                        <option value=\"qci\">qci</option> \
+                        <option value=\"qbu\">qbu</option> \
+                        <option value=\"qav\">qav</option> \
+"
+		if (deviceport.indexOf("swp") >= 0)
+			btport += "<option value=\"cbgen\">cbgen</option> \
+				<option value=\"cbrec\">cbrec</option>"
+	} else if (devicename.indexOf("imx8mp") >= 0) {
+		btport += "<option value=\"qbv\" selected>qbv</option> \
+                        <option value=\"qbu\">qbu</option> \
+                        <option value=\"qav\">qav</option>"
+	} else if (devicename.indexOf("ls1021") >= 0) {
+		btport += "<option value=\"qbv\" selected>qbv</option> \
 			<option value=\"qci\">qci</option> \
-			<option value=\"cbgen\">cbgen</option> \
-			<option value=\"cbrec\">cbrec</option> \
+			<option value=\"qbu\">qbu</option> \
+			<option value=\"qav\">qav</option>"
+	} else {
+		btport += "<option value=\"qbv\" selected>qbv</option> \
+			<option value=\"qci\">qci</option> \
 			<option value=\"qbu\">qbu</option> \
 			<option value=\"qav\">qav</option> \
-			<option value=\"p8021cb\">p8021cb</option> \
-			</select>" ;
+			<option value=\"cbgen\">cbgen</option> \
+			<option value=\"cbrec\">cbrec</option>"
+	}
+
+	btport += "</select>"
+
 	$('#btaddtsn').after(btport);
 	$('#tsnprotocol').after('<div style="position:relative;left:20px;top:2px"> \
 				<iframe id="configframe" name="configframe" style="position:float;top:200;margin=10px;width:300px;height:400px;"></iframe> \
