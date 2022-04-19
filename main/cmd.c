@@ -574,6 +574,7 @@ int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 	int option_index = 0;
 	char portname[IF_NAMESIZE];
 	int ret;
+	bool isfilein = 0;
 	uint32_t maxsdu = 0;
 	uint8_t configchange = 0;
 	uint64_t basetime = 0;
@@ -622,6 +623,8 @@ int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 
 			munmap(config_m, config_stat.st_size);
 			close(config_fd);
+
+			isfilein = 1;
 
 			//logv("entries setting:\n%s\n", config);
 
@@ -713,6 +716,7 @@ int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 			ERROR("setqbv", "read entries failed.");
 			return -1;
 		}
+		isfilein = 0;
 	}
 
 	if (!device) {
@@ -722,7 +726,7 @@ int cli_cmd_qbv_set(UNUSED int argc, UNUSED char *argv[], UNUSED int cmdnumber)
 		return -1;
 	}
 
-	if (fill_qbv_set(portname, config, disable ? 0:1,
+	if (fill_qbv_set(portname, config, isfilein, disable ? 0:1,
 				configchange, basetime,
 				cycletime, cycletimeext, maxsdu, initgate) != 0) {
 		if (config)
