@@ -279,9 +279,9 @@ int fill_qci_cap_get(char *portname)
 	return tsn_qci_streampara_get(portname, &sp);
 }
 
-int fill_qbv_set(char *portname, char *config, bool enable, uint8_t configchange,
-		uint64_t basetime, uint32_t cycletime,
-		uint32_t cycletimeext, uint32_t maxsdu, uint8_t initgate)
+int fill_qbv_set(char *portname, char *config, bool isfilein, bool enable,
+		 uint8_t configchange, uint64_t basetime, uint32_t cycletime,
+		 uint32_t cycletimeext, uint32_t maxsdu, uint8_t initgate)
 {
 	uint32_t count = 0;
 	struct tsn_qbv_entry *conf = NULL;
@@ -321,14 +321,15 @@ int fill_qbv_set(char *portname, char *config, bool enable, uint8_t configchange
 
 	memset(conf, 0, MAX_ENTRY_SIZE);
 
-	ret = qbv_entry_parse_from_para(config, conf, &count, &cycletime);
-	if (ret < 0) {
+	if (isfilein) {
 		count = 0; cycletime = 0;
 		ret  = qbv_entry_parse_from_file(config, conf, &count, &cycletime);
 		if (ret < 0) {
 			free(conf);
 			return -1;
 		}
+	} else {
+		ret = qbv_entry_parse_from_para(config, conf, &count, &cycletime);
 	}
 
 	adminconf.admin.cycle_time = cycletime;
