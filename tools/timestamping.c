@@ -158,6 +158,8 @@ static int do_send_one(int fdt, int length)
 	char *buf;
 
 	buf = (char *)malloc(length);
+	if (!buf)
+		return -1;
 	memcpy(buf, sync_packet, sizeof(sync_packet));
 
 	iov.iov_base = buf;
@@ -171,7 +173,7 @@ static int do_send_one(int fdt, int length)
 		msg.msg_control = &control;
 		msg.msg_controllen = sizeof(control);
 
-		tdeliver = gettime_ns() + delay_us * 1000;
+		tdeliver = gettime_ns() + (uint64_t)delay_us * 1000;
 		printf("set TXTIME is %ld\n", tdeliver);
 		cm = CMSG_FIRSTHDR(&msg);
 		cm->cmsg_level = SOL_SOCKET;

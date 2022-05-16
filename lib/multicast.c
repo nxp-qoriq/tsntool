@@ -139,6 +139,8 @@ int create_alarm_thread(uint64_t ts, uint32_t offset, uint32_t cycle,
 	}
 
 	msg = (struct alarm_node *)malloc(sizeof(struct alarm_node));
+	if (!msg)
+		return -ENOMEM;
 	memset(msg, 0, sizeof(*msg));
 
 	node = head_msg;
@@ -175,6 +177,8 @@ pthread_t *create_alarm_common(uint64_t ts, uint32_t offset, uint32_t cycle,
 	int res;
 
 	msg = (struct alarm_node *)malloc(sizeof(struct alarm_node));
+	if (!msg)
+		return NULL;
 	memset(msg, 0, sizeof(*msg));
 
 	node = head_msg;
@@ -353,9 +357,9 @@ static int tsn_multicast_cb(struct nl_msg *msg, void *data)
 			case TSN_CMD_QBV_SET:
 				{
 				int nlalen, remain;
-				int interface;
-				uint64_t cctime;
-				uint32_t cytime;
+				int interface = 0;
+				uint64_t cctime = 0;
+				uint32_t cytime = 0;
 				bool enable = 0;
 				struct nlattr *nla;
 

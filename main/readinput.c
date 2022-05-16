@@ -94,6 +94,8 @@ char *para_generator(const char *text, int state)
 			char *para;
 
 			para = malloc(strlen(name) + 2);
+			if (!para)
+				return NULL;
 			sprintf(para, "--%s", name);
 			return para;
 		}
@@ -349,6 +351,9 @@ char *readinput(const char *instruction, const char *tmpfile, FILE *output)
 		lseek(tmpfd, 0, SEEK_SET);
 
 		input = malloc(size+1);
+		if (!input)
+			goto fail;
+
 		input[size] = '\0';
 
 		/* Read the input */

@@ -416,7 +416,6 @@ static inline int is_hex_oct(char *str)
 	while (*str != '\0') {
 		if ((*str <= '9' && *str >= '0') || *str == '.') {
 			str++;
-			continue;
 		} else {
 			loge("warning: parameter '%s' is not right Decimal expression\n", opt);
 			return -1;
@@ -430,7 +429,7 @@ uint64_t get_seconds_time(char *optbuf)
 {
 	uint64_t basetime, basetimel, basetimeh;
 	char *pt;
-	char bufs[32];
+	char bufs[32] = {0};
 
 	pt = strrchr(optarg, '.');
 	if (pt) {

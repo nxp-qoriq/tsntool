@@ -627,6 +627,8 @@ int tsn_msg_recv_analysis(struct showtable *linkdata, void *para)
 		if (json) {
 			char *buf = NULL;
 			FILE *fp = fopen("/tmp/tsntool.json","w");
+			if (!fp)
+				return -ENOMEM;
 
 			if (para)
 				get_para_from_json(type, json, para);
