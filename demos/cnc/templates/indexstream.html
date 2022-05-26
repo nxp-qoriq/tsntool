@@ -176,6 +176,9 @@ function reselect()
 		case 'qbv':
 			window.configframe.location.href = "/configStreamQbvHTML?sid="+sid;
 			break;
+		case 'streamidentify':
+			window.configframe.location.href = "/configStreamidentifyHTML?sid="+sid;
+			break;
 		default:
 			break;
 	};
@@ -186,6 +189,7 @@ function addtsnset() {
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \
 			<select class=\"button\" id=\"tsnprotocol\" name=\"tsnprotocol\" onchange=\"reselect()\"> \
 			<option value=\"qbv\" selected>qbv</option> \
+			<option value=\"streamidentify\">streamidentify</option> \
 			</select>" ;
 	$('#btaddtsn').after(btport);
 	$('#tsnprotocol').after('<div style="position:relative;left:20px;top:2px"> \

@@ -153,6 +153,7 @@ function confirmset()
 			return;
 		}
 	}
+	qbvstream["qcien"] = $('input:checkbox[name="qcien"]').is(':checked');
 
 	$.ajax({
 		type: "POST",
@@ -183,6 +184,7 @@ function confirmset()
 <br><br>&nbsp;&nbsp;Gate open time:
 <input class="button value" type="text" name="opentime" id="opentime">
 </b>example: ns<b>
+<br><br>&nbsp;&nbsp;<input class="button addlist" type="checkbox" name="qcien" value="true" checked="checked">enable Qci
 <br><br>
 <input class="button device confirm" type="button" name="confirm" id="confirm" onclick="confirmset()" value="Yes, confirm">
 </form>

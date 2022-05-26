@@ -586,9 +586,45 @@ def index():
 def configstreamHTML():
     return render_template('indexstream.html')
 
+@app.route('/configStreamidentifyHTML')
+def configStreamidentifyHTML():
+    return render_template('configStreamidentify.html')
+
 @app.route('/configStreamQbvHTML')
 def configStreamQbvHTML():
     return render_template('configStreamQbv.html')
+
+@app.route('/streamidentify',  methods=['POST'])
+def streamidentify():
+    try:
+        tojson = request.get_json();
+        stream = streams[tojson['sid']];
+        streampath = stream['path'];
+        conf = dict();
+        conf['macaddr'] = tojson['macaddr'];
+        conf['vlanid'] = stream['vid'];
+        conf['enable'] = tojson['enable'];
+        conf['vlantype'] = tojson['vlantype'];
+        conf['filtertype'] = tojson['filtertype'];
+        conf['streamhandle'] = tojson['sid'];
+        conf['index'] = tojson['sid'];
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            for key, value in devices.items():
+                if (value['name'] == board):
+                    deviceip = value['ip'];
+                    break;
+            conf['device'] = deviceip;
+            if(streampath[i][2] != ''):
+                conf['port'] = streampath[i][2];
+            else:
+                conf['port'] = streampath[i][1];
+
+            loadncqcisid(conf);
+        status = 'true';
+    except Exception:
+        status = 'false';
+    return jsonify({"status": status});
 
 @app.route('/qbvstreamset',  methods=['POST'])
 def qbvstreamset():
@@ -597,23 +633,31 @@ def qbvstreamset():
         stream = streams[tojson['sid']];
         streampath = stream['path'];
         delay = 0;
+        pdelay = 0;
         conf = dict();
         conf['priority'] = stream['priority'];
         conf['basetime'] = tojson['basetime'];
         conf['cycletime'] = tojson['cycletime'];
         conf['opentime'] = tojson['opentime'];
+        conf['sid'] = tojson['sid'];
+        qcien = tojson['qcien'];
         for i in range(len(streampath)):
             board = streampath[i][0];
+            port = streampath[i][1];
+            if (qcien and port != ''):
+                    board_qci_set(board, port, conf, delay);
             port = streampath[i][2];
             print(board+':'+port);
             if (port == ''):
                 continue;
+            delay = delay + pdelay;
             baseoffset = board_qbv_set(board, port, conf, delay)
             if (baseoffset < 0):
                 status = 'false';
                 break;
             pdelays = literal_eval(gdelays[board]);
-            delay = delay + baseoffset + int(pdelays[port]);
+            pdelay = int(pdelays[port]);
+            delay = delay + baseoffset;
         status = 'true';
     except Exception:
         status = 'false';
@@ -1067,6 +1111,27 @@ def board_qbv_set(board, port, streamconf, delay):
         interval_len += int(entry['period']);
 
     return -1;
+
+def board_qci_set(board, port, streamconf, delay):
+    for key, value in devices.items():
+        if (value['name'] == board):
+            deviceip = value['ip'];
+            break;
+
+    btime = int(float(streamconf['basetime'])*1000000000);
+    btime += delay;
+    closetime = int(streamconf['cycletime']) - int(streamconf['opentime']);
+    conf = {'index': streamconf['sid'], 'enable': 'enable', 'initgate': 'open', 'initipv': streamconf['priority'], 'basetime': str(btime), 'cycletime': streamconf['cycletime'], 'entry': [{'gate': 'open', 'period': streamconf['opentime'], 'ipv': '-1'}, {'gate': 'close', 'period': str(closetime), 'ipv': '-1'}]};
+    conf['port'] = port;
+    conf['whichpart'] = 'sgi';
+    conf['device'] = deviceip;
+    loadncqciset(conf);
+
+    sficonf = {'index': streamconf['sid'], 'enable': 'enable', 'streamhandle': streamconf['sid'], 'priority': streamconf['priority'], 'gateid': streamconf['sid'], 'flowmeterid': '-1'};
+    sficonf['port'] = port;
+    sficonf['whichpart'] = 'sfi';
+    sficonf['device'] = deviceip;
+    loadncqciset(sficonf);
 
 @app.route('/topology/graph.json',methods=['GET'])
 def get_graph_file():
