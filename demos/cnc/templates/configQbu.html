@@ -121,7 +121,7 @@ function confirmset()
 
 	$('input:radio[value="preemptable"]').each(function(){
 				if ($(this).is(":checked"))
-					preemptset['plist'].push({tc: i, preemptable: "preemptable"});
+					preemptset['plist'].push({tc: i, preemptable: "preemptible"});
 				else
 					preemptset['plist'].push({tc: i, preemptable: "express"});
 				i++;
