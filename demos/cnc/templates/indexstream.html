@@ -179,6 +179,9 @@ function reselect()
 		case 'streamidentify':
 			window.configframe.location.href = "/configStreamidentifyHTML?sid="+sid;
 			break;
+		case 'CQF':
+			window.configframe.location.href = "/configStreamCQFHTML?sid="+sid;
+			break;
 		default:
 			break;
 	};
@@ -188,8 +191,9 @@ function addtsnset() {
 	var btport = "<div id=\"aconfig\" style=\"top:0;bottom:0;float:left;overflow-x：scroll;width:100%;border:1px solid #000;\"> \
 				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \
 			<select class=\"button\" id=\"tsnprotocol\" name=\"tsnprotocol\" onchange=\"reselect()\"> \
-			<option value=\"qbv\" selected>qbv</option> \
-			<option value=\"streamidentify\">streamidentify</option> \
+			<option value=\"streamidentify\" selected>streamidentify</option> \
+			<option value=\"qbv\">qbv</option> \
+			<option value=\"CQF\">CQF</option> \
 			</select>" ;
 	$('#btaddtsn').after(btport);
 	$('#tsnprotocol').after('<div style="position:relative;left:20px;top:2px"> \
@@ -198,7 +202,7 @@ function addtsnset() {
 	$('#configframe').after('&nbsp;&nbsp;<button id="configcancle" onclick="aconfigremove();" \
 				type="button" class="button configcancle">cancel</button>');
 	$('#configcancle').after('</div>');
-	window.configframe.location.href = "/configStreamQbvHTML?sid="+sid;
+	window.configframe.location.href = "/configStreamidentifyHTML?sid="+sid;
 }
 
 </script>

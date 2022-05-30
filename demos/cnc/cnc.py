@@ -550,6 +550,10 @@ def configStreamidentifyHTML():
 def configStreamQbvHTML():
     return render_template('configStreamQbv.html')
 
+@app.route('/configStreamCQFHTML')
+def configStreamCQFHTML():
+    return render_template('configStreamCQF.html')
+
 @app.route('/streamidentify',  methods=['POST'])
 def streamidentify():
     try:
@@ -579,6 +583,74 @@ def streamidentify():
     except Exception:
         status = 'false';
     return jsonify({"status": status});
+
+Cqfct = '';
+Cqfot = '';
+Cqfslots = dict();
+@app.route('/cqfstreamset',  methods=['POST'])
+def cqfstreamset():
+    try:
+        global Cqfct;
+        global Cqfot;
+        global Cqfslots;
+        tojson = request.get_json();
+        stream = streams[tojson['sid']];
+        streampath = stream['path'];
+        if (Cqfct == ''):
+            Cqfct = tojson['cycletime'];
+        elif(Cqfct != tojson['cycletime']):
+            return jsonify({"status": 'false'});
+
+        if (Cqfot == ''):
+            Cqfot = tojson['opentime'];
+        elif(Cqfot != tojson['opentime']):
+            return jsonify({"status": 'false'});
+
+        conf = dict();
+        conf['priority'] = stream['priority'];
+        conf['basetime'] = '0';
+        conf['cycletime'] = Cqfct;
+        conf['opentime'] = Cqfot;
+        conf['sid'] = tojson['sid'];
+        slotnums = int(int(Cqfct) / int(Cqfot));
+
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            if (Cqfslots.get(board) == None):
+                Cqfslots[board] = 0;
+
+        suc = True;
+        for i in range(slotnums):
+            suc = True;
+            for j in range(len(streampath) - 1):
+                board = streampath[j][0];
+                if ((Cqfslots[board] & (1 << (i + j))) > 0):
+                    suc = False;
+                    break;
+            if (suc):
+                offset = i;
+                break;
+
+        if (suc == False):
+            return jsonify({"status": 'false'});
+
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            port = streampath[i][1];
+            if (port != ''):
+                    delay = int(Cqfot) * (offset + i - 1);
+                    board_qci_set(board, port, conf, delay);
+            port = streampath[i][2];
+            print(board+':'+port);
+            if (port == ''):
+                continue;
+            delay = int(Cqfot) * (offset + i);
+            Cqfslots[board] = Cqfslots[board] | (1 << (offset + i));
+            board_cqf_qbv_set(board, port, conf, delay);
+        status = 'true';
+    except Exception:
+        status = 'false';
+    return jsonify({"status": status, "offset": int(Cqfot) * offset});
 
 @app.route('/qbvstreamset',  methods=['POST'])
 def qbvstreamset():
@@ -1037,6 +1109,50 @@ def board_qbv_conf_get(board, port):
 
     return None;
 
+def board_cqf_qbv_set(board, port, streamconf, delay):
+    conf = board_qbv_conf_get(board, port);
+    print("Get CQF Qbv config params:");
+    print (conf);
+    if (conf == None):
+        print("There is no CQF Qbv config on this device port");
+        gatestatus = 1 << int(streamconf['priority']);
+        basetime = streamconf['basetime'];
+        closetime = int(streamconf['cycletime']) - int(streamconf['opentime']) - delay;
+        closegate = 255 & (~gatestatus);
+        conf = {'basetime': basetime, 'cycletime': streamconf['cycletime'], 'entry': [{'gate': str(closegate), 'period': delay}, {'gate': str(gatestatus), 'period': streamconf['opentime']}, {'gate': str(closegate), 'period': str(closetime)}]};
+        print("Qbv config data:");
+        print (conf);
+        board_qbv_conf_set(board, port, conf);
+        return 0;
+
+    gatestatus = 1 << int(streamconf['priority']);
+    for entry in conf['entry']:
+        entry['gate'] = str(int(entry['gate']) & (~gatestatus));
+
+    offset = 0;
+    i = 0;
+    for entry in conf['entry']:
+        if (delay == offset):
+            lefttime = int(entry['period']) - int(streamconf['opentime']);
+            if (lefttime == 0):
+                entry['gate'] = str(gatestatus);
+            else:
+                entry['period'] = str(lefttime);
+                conf['entry'].insert(i, {'gate':str(gatestatus), 'period':streamconf['opentime']});
+            break;
+        elif (delay < (offset + int(entry['period']))):
+            entry['period'] = str(delay - offset);
+            conf['entry'].insert(i + 1, {'gate':str(gatestatus), 'period':streamconf['opentime']});
+            lefttime = offset + int(entry['period']) - delay - int(streamconf['opentime']);
+            if (lefttime > 0):
+                conf['entry'].insert(i + 2, {'gate':entry['gate'], 'period':str(lefttime)});
+            break;
+        else:
+            offset = offset + int(entry['period']);
+            i = i + 1;
+    board_qbv_conf_set(board, port, conf);
+    return 0;
+
 def board_qbv_set(board, port, streamconf, delay):
     conf = board_qbv_conf_get(board, port);
     print("Get Qbv config params:");
@@ -1044,8 +1160,8 @@ def board_qbv_set(board, port, streamconf, delay):
     btime = int(float(streamconf['basetime'])*1000000000);
     if (conf == None):
         print("There is no Qbv config on this device port");
-        btime += delay;
         gatestatus = 1 << int(streamconf['priority']);
+        btime += delay;
         closetime = int(streamconf['cycletime']) - int(streamconf['opentime']);
         conf = {'basetime': str(btime), 'cycletime': streamconf['cycletime'], 'entry': [{'gate': str(gatestatus), 'period': streamconf['opentime']}, {'gate': str(255), 'period': str(closetime)}]};
         print("Qbv config data:");
