@@ -127,14 +127,6 @@ function confirmset()
 	var sid = window.parent.formgetsid();
 
 	qbvstream["sid"] = sid;
-	var basetime = $("input[name='basetime']").val();
-	if (basetime != '') {
-		qbvstream["basetime"] = basetime;
-		if (isNaN(parseInt(basetime))) {
-			alert("Basetime Error!");
-			return;
-		}
-	}
 
 	var cycletime = $("input[name='cycletime']").val();
 	if (cycletime != '') {
@@ -153,11 +145,10 @@ function confirmset()
 			return;
 		}
 	}
-	qbvstream["qcien"] = $('input:checkbox[name="qcien"]').is(':checked');
 
 	$.ajax({
 		type: "POST",
-		url: "/qbvstreamset",
+		url: "/cqfstreamset",
 		dataType: "json",
 		contentType: "application/json; charset=utf-8",
 		data: JSON.stringify(qbvstream),
@@ -175,16 +166,12 @@ function confirmset()
 </script>
 <div>
 <form>
-<br><br>&nbsp;&nbsp;basetime:
-<input class="button value" type="text" name="basetime" id="basetime">
-</b>example: s.ns<b>
 <br><br>&nbsp;&nbsp;cycletime:
 <input class="button value" type="text" name="cycletime" id="cycletime">
 </b>example: ns<b>
 <br><br>&nbsp;&nbsp;Gate open time:
 <input class="button value" type="text" name="opentime" id="opentime">
 </b>example: ns<b>
-<br><br>&nbsp;&nbsp;<input class="button addlist" type="checkbox" name="qcien" value="true" checked="checked">enable Qci
 <br><br>
 <input class="button device confirm" type="button" name="confirm" id="confirm" onclick="confirmset()" value="Yes, confirm">
 </form>

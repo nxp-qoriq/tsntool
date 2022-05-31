@@ -60,11 +60,10 @@ def loadNetconf(xmlstr, device):
 #tsn config for tsn yang v2
 def loadnetconfqbv(configdata):
     print(configdata);
-    print(type(configdata));
     interfaces = ET.Element('interfaces');
     interfaces.set('xmlns', 'urn:ietf:params:xml:ns:yang:ietf-interfaces');
     interfaces.set('xmlns:sched', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-sched');
-    interfaces.set('xmlns:preempt', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-preemption');
+    interfaces.set('xmlns:dot1q', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge');
     interfaces.set('xmlns:ianaift', 'urn:ietf:params:xml:ns:yang:iana-if-type');
 
     port = ET.SubElement(interfaces, 'interface');
@@ -77,7 +76,8 @@ def loadnetconfqbv(configdata):
     itype = ET.SubElement(port, 'type');
     itype.text = 'ianaift:ethernetCsmacd';
 
-    admin = ET.SubElement(port, 'sched:gate-parameters');
+    brport = ET.SubElement(port, 'dot1q:bridge-port');
+    admin = ET.SubElement(brport, 'sched:gate-parameter-table');
     gate_enable = ET.SubElement(admin, 'sched:gate-enabled');
     gate_enable.text = configdata['enable'];
 
@@ -94,27 +94,38 @@ def loadnetconfqbv(configdata):
 
         return loadNetconf(qbvxmlstr, configdata['device']);
 
-    listlen = ET.SubElement(admin, 'sched:admin-control-list-length');
-    listlen.text = str(len(configdata['entry']));
+    admin_state = ET.SubElement(admin, 'sched:admin-gate-states');
+    admin_state.text = '255';
+    sup_list = ET.SubElement(admin, 'sched:supported-list-max');
+    sup_list.text = '64';
+    sup_inverval = ET.SubElement(admin, 'sched:supported-interval-max');
+    sup_inverval.text = '1000000000';
+    admin_gcl = ET.SubElement(admin, 'sched:admin-control-list');
 
+    ctsum = 0;
     for i in range(len(configdata['entry'])):
-        gatelist = ET.SubElement(admin,'sched:admin-control-list');
+        gateentry = ET.SubElement(admin_gcl,'sched:gate-control-entry');
 
-        gindex = ET.SubElement(gatelist, 'sched:index');
+        gindex = ET.SubElement(gateentry, 'sched:index');
         gindex.text = str(i);
 
-        #gce = ET.SubElement(gatelist, 'gate-control-entry');
-        oname = ET.SubElement(gatelist, 'sched:operation-name');
+        oname = ET.SubElement(gateentry, 'sched:operation-name');
         oname.text = 'sched:set-gate-states';
 
-        gentry = ET.SubElement(gatelist, 'sched:sgs-params');
-        gatestate = ET.SubElement(gentry, 'sched:gate-states-value');
+        gatestate = ET.SubElement(gateentry, 'sched:gate-states-value');
         gatestate.text = str(configdata['entry'][i]['gate']);
-        ti = ET.SubElement(gentry, 'sched:time-interval-value');
+        ti = ET.SubElement(gateentry, 'sched:time-interval-value');
         ti.text = str(configdata['entry'][i]['period']);
+        ctsum = ctsum + int(configdata['entry'][i]['period']);
 
-    #cycletime = ET.SubElement(admin, 'admin-cycle-time');
-    #cycletime.text = '200000';
+    cycletime = ET.SubElement(admin, 'sched:admin-cycle-time');
+    ctnumerator = ET.SubElement(cycletime, 'sched:numerator');
+    if configdata.__contains__('cycletime'):
+        ctnumerator.text = configdata['cycletime'];
+    else:
+        ctnumerator.text = str(ctsum);
+    ctdenominator = ET.SubElement(cycletime, 'sched:denominator');
+    ctdenominator.text = '1000000000';
     if configdata.__contains__('basetime'):
         xs,zs=math.modf(float(configdata['basetime']));
         xsstr = str(xs).split('.');
@@ -125,7 +136,7 @@ def loadnetconfqbv(configdata):
         basetime = ET.SubElement(admin, 'sched:admin-base-time');
         seconds = ET.SubElement(basetime, 'sched:seconds');
         seconds.text = str(int(zs));
-        fragseconds = ET.SubElement(basetime, 'sched:fractional-seconds');
+        fragseconds = ET.SubElement(basetime, 'sched:nanoseconds');
         fragseconds.text = xshu;
 
     prettyXml(interfaces);
@@ -169,40 +180,28 @@ def loadbridge_vlan(configdata):
 
 def loadstream_handle(configdata):
     print(configdata);
-    counts = 0
-    bridges = ET.Element('bridges');
-    bridges.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge");
-    bridges.set('xmlns:stream', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-stream-id");
+    streamid = ET.Element('stream-identity');
+    streamid.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1cb-stream-identification");
 
-    bridge = ET.SubElement(bridges, 'bridge');
-    name = ET.SubElement(bridge, 'name');
-    name.text = 'switch';
-    address = ET.SubElement(bridge, 'address');
-    address.text = 'd6-ad-62-c5-49-ae'
+    index = ET.SubElement(streamid, 'index');
+    index.text = configdata['index'];
+    streamhandle = ET.SubElement(streamid, 'handle');
+    streamhandle.text = configdata['streamhandle'];
+    oface = ET.SubElement(streamid, 'out-facing');
+    iport = ET.SubElement(oface, 'input-port');
+    iport.text = configdata['iport'];
+    oport = ET.SubElement(oface, 'output-port');
+    oport.text = configdata['oport'];
+    streamidentification = ET.SubElement(streamid, 'null-stream-identification');
+    dmac = ET.SubElement(streamidentification, 'destination-mac');
+    dmac.text = configdata['macaddr'];
+    vlantype = ET.SubElement(streamidentification, 'tagged');
+    vlantype.text = configdata['vlantype'];
+    vlanid = ET.SubElement(streamidentification, 'vlan');
+    vlanid.text = configdata['vlanid'];
 
-    bridgetype = ET.SubElement(bridge, 'bridge-type');
-    bridgetype.text = 'provider-bridge'
-    component = ET.SubElement(bridge, 'component');
-    name_ = ET.SubElement(component, 'name');
-    name_.text = configdata['port_name'];
-    type_ = ET.SubElement(component, 'type');
-    type_.text = 'edge-relay-component';
-    streams = ET.SubElement(component, 'stream:streams');
-
-    while counts < 4:
-        streamidentitytable = ET.SubElement(streams, 'stream:stream-identity-table');
-        index = ET.SubElement(streamidentitytable, 'stream:index');
-        index.text = str(counts)
-        streamidenabled = ET.SubElement(streamidentitytable, 'stream:stream-id-enabled');
-        streamidenabled.text = 'true'
-        streamhandle = ET.SubElement(streamidentitytable, 'stream:stream-handle');
-        streamhandle.text = str(counts)
-        identificationtype = ET.SubElement(streamidentitytable, 'stream:identification-type');
-        identificationtype.text = 'null'
-        counts += 1
-
-    prettyXml(bridges);
-    streamxmlb = ET.tostring(bridges, encoding='utf8', method='xml');
+    prettyXml(streamid);
+    streamxmlb = ET.tostring(streamid, encoding='utf8', method='xml');
     streamxmlstr = str(streamxmlb, encoding='utf-8');
     print(configdata['device'])
     return loadNetconf(streamxmlstr, configdata['device']);
@@ -211,17 +210,17 @@ def loadport(configdata):
     print(configdata);
     interfaces = ET.Element('interfaces');
     interfaces.set('xmlns', 'urn:ietf:params:xml:ns:yang:ietf-interfaces');
-    interfaces.set('xmlns:preempt', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-preemption');
     interfaces.set('xmlns:ianaift', 'urn:ietf:params:xml:ns:yang:iana-if-type');
 
-    interface = ET.SubElement(interfaces, 'interface');
-    name = ET.SubElement(interface, 'name');
-    name.text = configdata['port_name']
-    enable = ET.SubElement(interface, 'enabled');
-    enable.text =  'true';
-    type = ET.SubElement(interface, 'type');
-    type.text = 'ianaift:ethernetCsmacd';
-	
+    for i in range(len(configdata['ports'])):
+        interface = ET.SubElement(interfaces, 'interface');
+        name = ET.SubElement(interface, 'name');
+        name.text = configdata['ports'][i];
+        enable = ET.SubElement(interface, 'enabled');
+        enable.text =  'true';
+        porttype = ET.SubElement(interface, 'type');
+        porttype.text = 'ianaift:ethernetCsmacd';
+
     prettyXml(interfaces);
     portxmlb = ET.tostring(interfaces, encoding='utf8', method='xml');
     portxmlstr = str(portxmlb, encoding='utf-8');
@@ -230,39 +229,35 @@ def loadport(configdata):
 
 def loadnetconfcbgen(configdata):
     print(configdata);
-    counts = 0
-    list_ = configdata["portlist"]
-    frame = ET.Element('frame-replication-and-elimination');
+    frame = ET.Element('frer');
     frame.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1cb-frer");
 
-    sequence = ET.SubElement(frame, 'sequence-generation-list');
+    sequence = ET.SubElement(frame, 'sequence-generation');
     index = ET.SubElement(sequence, 'index');
     index.text = configdata['index'];
+    streamhandle = ET.SubElement(sequence, 'stream');
+    streamhandle.text = configdata['streamhandle'];
 
-    sequence = ET.SubElement(frame, 'sequence-identification-list');
+    sequence = ET.SubElement(frame, 'sequence-identification');
     port = ET.SubElement(sequence, 'port');
-    port.text = configdata['port_name'];
-    direction = ET.SubElement(sequence, 'direction');
+    port.text = configdata['port'];
+    direction = ET.SubElement(sequence, 'direction-out-facing');
     direction.text = 'true';
+    streamhandle = ET.SubElement(sequence, 'stream');
+    streamhandle.text = configdata['streamhandle'];
 
-    stream = ET.SubElement(frame, 'stream-split-list');
+    stream = ET.SubElement(frame, 'stream-split');
     port = ET.SubElement(stream, 'port');
-    port.text = configdata['port_name'];
-    direction = ET.SubElement(stream, 'direction');
+    port.text = configdata['port'];
+    direction = ET.SubElement(stream, 'direction-out-facing');
     direction.text = 'true';
 
-    while counts < 4:
-        if list_[counts] == "in":
-            input_ = ET.SubElement(stream, 'input-id-list');
-            input_.text = str(counts);
-        counts += 1
+    inputid = ET.SubElement(stream, 'input-id');
+    inputid.text = configdata['input-id'];
 
-    counts = 0
-    while counts < 4:
-        if list_[counts] == "out":
-            output = ET.SubElement(stream, 'output-id-list');
-            output.text = str(counts);
-        counts += 1
+    for i in range(len(configdata['output-id'])):
+        outputid = ET.SubElement(stream, 'output-id');
+        outputid.text = configdata['output-id'][i];
 
     prettyXml(frame);
     cbgenxmlb = ET.tostring(frame, encoding='utf8', method='xml');
@@ -272,15 +267,15 @@ def loadnetconfcbgen(configdata):
 
 def loadnetconfcbrec(configdata):
     print(configdata);
-    frame = ET.Element('frame-replication-and-elimination');
+    frame = ET.Element('frer');
     frame.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1cb-frer");
 
-    reclist = ET.SubElement(frame, 'sequence-recovery-list');
+    reclist = ET.SubElement(frame, 'sequence-recovery');
     index = ET.SubElement(reclist, 'index');
     index.text = configdata['index']
     hislen = ET.SubElement(reclist, 'history-length');
     hislen.text = configdata['hislen']
-    portlist = ET.SubElement(reclist, 'port-list');
+    portlist = ET.SubElement(reclist, 'port');
     portlist.text = configdata['port_name']
 
     prettyXml(frame);
@@ -293,6 +288,7 @@ def loadnetconfqbu(configdata):
     print(configdata);
     interfaces = ET.Element('interfaces');
     interfaces.set('xmlns', 'urn:ietf:params:xml:ns:yang:ietf-interfaces');
+    interfaces.set('xmlns:dot1q', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge');
     interfaces.set('xmlns:preempt', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-preemption');
     interfaces.set('xmlns:ianaift', 'urn:ietf:params:xml:ns:yang:iana-if-type');
     port = ET.SubElement(interfaces, 'interface');
@@ -304,11 +300,12 @@ def loadnetconfqbu(configdata):
     itype = ET.SubElement(port, 'type');
     itype.text = 'ianaift:ethernetCsmacd';
 
-    tclist = ET.SubElement(port, 'preempt:frame-preemption-parameters');
+    brport = ET.SubElement(port, 'dot1q:bridge-port');
+    tclist = ET.SubElement(brport, 'preempt:frame-preemption-parameters');
 
     for i in range(len(configdata['plist'])):
         onetc = ET.SubElement(tclist, 'preempt:frame-preemption-status-table');
-        index = ET.SubElement(onetc, 'preempt:traffic-class');
+        index = ET.SubElement(onetc, 'preempt:priority');
         index.text = str(configdata['plist'][i]['tc']);
         preemptable = ET.SubElement(onetc, 'preempt:frame-preemption-status');
         preemptable.text = configdata['plist'][i]['preemptable'];
@@ -322,75 +319,16 @@ def loadnetconfqbu(configdata):
 
 def loadncqcisid(configdata):
     print(configdata);
-    bridges = ET.Element('bridges');
-    bridges.set('xmlns', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge');
-    bridges.set('xmlns:stream', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-stream-id');
-    bridge = ET.SubElement(bridges, 'bridge');
-    #we have to judge by port name
-    brname = ET.SubElement(bridge, 'name');
-    brtype = ET.SubElement(bridge, 'bridge-type');
-    address = ET.SubElement(bridge, 'address');
 
-    if (configdata['port'].find("eno") >= 0):
-        brname.text = 'enetc';
-        address.text = '00-00-00-00-00-01';
-    else:
-        brname.text = 'switch';
-        address.text = '00-00-00-00-00-02';
+    pconf = dict();
+    pconf['device'] = configdata['device'];
+    if (configdata.__contains__('iport') == False):
+        configdata['iport'] = configdata['port'];
+        configdata['oport'] = configdata['port'];
 
-    brtype.text = 'provider-edge-bridge';
-    component = ET.SubElement(bridge, 'component');
-    compname = ET.SubElement(component, 'name');
-    compname.text = configdata['port'];
-
-    comptype = ET.SubElement(component, 'type');
-    comptype.text = 'edge-relay-component';
-    streams = ET.SubElement(component, 'stream:streams');
-    sidtable = ET.SubElement(streams, 'stream:stream-identity-table');
-    index = ET.SubElement(sidtable, 'stream:index');
-    index.text = configdata['index'];
-
-    enable = ET.SubElement(sidtable, 'stream:stream-id-enabled');
-    enable.text = configdata['enable'];
-    if (configdata['enable'] == 'false'):
-        prettyXml(bridges);
-        sidxmlb = ET.tostring(bridges, encoding='utf8', method='xml');
-        sidxmlstr = str(sidxmlb, encoding='utf-8');
-        return loadNetconf(sidxmlstr, configdata['device']);
-
-    streamhandle = ET.SubElement(sidtable, 'stream:stream-handle');
-    streamhandle.text = configdata['streamhandle'];
-    identype = ET.SubElement(sidtable, 'stream:identification-type');
-    identype.text =  configdata['filtertype'];
-    param = ET.SubElement(sidtable, 'stream:parameters');
-    if (configdata['filtertype'] == 'null'):
-        nullpara = ET.SubElement(param, 'stream:null-stream-identification-params');
-        destaddr = ET.SubElement(nullpara, 'stream:dest-address');
-        destaddr.text = configdata['macaddr'];
-        vlantype = ET.SubElement(nullpara, 'stream:vlan-tagged');
-        vlantype.text = configdata['vlantype'];
-        if ('vlanid' in configdata):
-             vlanid = ET.SubElement(nullpara, 'stream:vlan-id');
-             vlanid.text = configdata['vlanid'];
-    elif (configdata['filtertype'] == "source-mac-and-vlan"):
-        srcpara = ET.SubElement(param, 'stream:source-mac-and-vlan-identification-params');
-        destaddr = ET.SubElement(nullpara, 'stream:source-address');
-        destaddr.text = configdata['macaddr'];
-        vlantype = ET.SubElement(nullpara, 'stream:vlan-tagged');
-        vlantype.text = configdata['vlantype'];
-        if ('vlanid' in configdata):
-             vlanid = ET.SubElement(nullpara, 'stream:vlan-id');
-             vlanid.text = configdata['vlanid'];
-    else:
-        print("filter type not supported");
-        return ('false', "filter type not supported");
-
-    prettyXml(bridges);
-    #ET.dump(bridges);
-    sidxmlb = ET.tostring(bridges, encoding='utf8', method='xml');
-    sidxmlstr = str(sidxmlb, encoding='utf-8');
-
-    return loadNetconf(sidxmlstr, configdata['device']);
+    pconf['ports'] = [configdata['iport'], configdata['oport']];
+    loadport(pconf);
+    return loadstream_handle(configdata);
 
 def createsfixml(component, configdata):
     streamfilter = ET.SubElement(component, 'sfsg:stream-filters');
@@ -418,13 +356,15 @@ def createsfixml(component, configdata):
     gateid = ET.SubElement(sfitable, 'sfsg:stream-gate-ref');
     gateid.text = configdata['gateid'];
 
-    filterspec = ET.SubElement(sfitable, 'sfsg:filter-specification-list');
-    findex = ET.SubElement(filterspec, 'sfsg:index');
-    findex.text = '0';
-
     if (configdata.__contains__('flowmeterid')):
-        fmiid = ET.SubElement(filterspec, 'psfp:flow-meter-ref');
+        fmiid = ET.SubElement(sfitable, 'psfp:flow-meter-instance-id');
         fmiid.text = configdata['flowmeterid'];
+
+    sdu = ET.SubElement(sfitable, 'sfsg:max-sdu-size');
+    sdu.text = '1518';
+    oversizeen = ET.SubElement(sfitable, 'sfsg:stream-blocked-due-to-oversize-frame-enabled');
+    oversizeen.text = 'false';
+
 
 def createsgixml(component, configdata):
     streamgate = ET.SubElement(component, 'sfsg:stream-gates');
@@ -445,27 +385,27 @@ def createsgixml(component, configdata):
     if (intinitipv >= 0 and intinitipv < 8) :
         initipv.text = prio[intinitipv];
     else :
-        initipv.text = 'wildcard';
+        initipv.text = 'null';
 
-    listlength =ET.SubElement(sgitable, 'psfp:admin-control-list-length');
-    listlength.text = str(len(configdata['entry']));
+    ctsum = 0;
+    adminlist = ET.SubElement(sgitable, 'psfp:admin-control-list');
     for i in range(len(configdata['entry'])):
-        adminlist = ET.SubElement(sgitable, 'psfp:admin-control-list');
-        entryindex = ET.SubElement(adminlist, 'psfp:index');
+        entry = ET.SubElement(adminlist, 'psfp:gate-control-entry');
+        entryindex = ET.SubElement(entry, 'psfp:index');
         entryindex.text = str(i);
-        ename = ET.SubElement(adminlist, 'psfp:operation-name');
+        ename = ET.SubElement(entry, 'psfp:operation-name');
         ename.text = 'psfp:set-gate-and-ipv';
-        cyclepara = ET.SubElement(adminlist, 'psfp:parameters');
-        egate = ET.SubElement(cyclepara, 'psfp:gate-state-value');
+        egate = ET.SubElement(entry, 'psfp:gate-state-value');
         egate.text = configdata['entry'][i]['gate'];
-        eti = ET.SubElement(cyclepara, 'psfp:time-interval-value');
+        eti = ET.SubElement(entry, 'psfp:time-interval-value');
         eti.text = configdata['entry'][i]['period'];
-        einitipv = ET.SubElement(cyclepara, 'psfp:ipv-value');
+        ctsum = ctsum + int(configdata['entry'][i]['period']);
+        einitipv = ET.SubElement(entry, 'psfp:ipv-spec');
         eintinitipv = int(configdata['entry'][i]['ipv']);
         if (eintinitipv >= 0 and eintinitipv < 8) :
             einitipv.text = prio[eintinitipv];
         else:
-            einitipv.text = 'wildcard';
+            einitipv.text = 'null';
 
     if configdata.__contains__('basetime'):
         xs,zs=math.modf(float(configdata['basetime']));
@@ -479,6 +419,26 @@ def createsgixml(component, configdata):
         seconds.text = str(int(zs));
         fragseconds = ET.SubElement(basetime, 'psfp:nanoseconds');
         fragseconds.text = xshu;
+
+    ct = ET.SubElement(sgitable, 'psfp:admin-cycle-time');
+    ctnumerator = ET.SubElement(ct, 'psfp:numerator');
+
+    if configdata.__contains__('cycletime'):
+        ctnumerator.text = configdata['cycletime'];
+    else:
+        ctnumerator.text = str(ctsum);
+
+    ctdenominator = ET.SubElement(ct, 'psfp:denominator');
+    ctdenominator.text = '1000000000';
+    suplist = ET.SubElement(streamgate, 'psfp:supported-list-max');
+    suplist.text = '184';
+    supct = ET.SubElement(streamgate, 'psfp:supported-cycle-max');
+    supctnu = ET.SubElement(supct, 'psfp:numerator');
+    supctnu.text = '1';
+    supctden = ET.SubElement(supct, 'psfp:denominator');
+    supctden.text = '1';
+    supitv = ET.SubElement(streamgate, 'psfp:supported-interval-max');
+    supitv.text = '1000000000';
 
 def createfmixml(component, configdata):
     flowmeter= ET.SubElement(component, 'psfp:flow-meters');
@@ -520,6 +480,9 @@ def createfmixml(component, configdata):
         dropyellow.text = 'true';
     else:
         dropyellow.text = 'false';
+
+    supfmi = ET.SubElement(flowmeter, 'psfp:max-flow-meter-instances');
+    supfmi.text = '183';
 
 def loadncqciset(configdata):
     print(configdata);
@@ -586,9 +549,115 @@ def index():
 def configstreamHTML():
     return render_template('indexstream.html')
 
+@app.route('/configStreamidentifyHTML')
+def configStreamidentifyHTML():
+    return render_template('configStreamidentify.html')
+
 @app.route('/configStreamQbvHTML')
 def configStreamQbvHTML():
     return render_template('configStreamQbv.html')
+
+@app.route('/configStreamCQFHTML')
+def configStreamCQFHTML():
+    return render_template('configStreamCQF.html')
+
+@app.route('/streamidentify',  methods=['POST'])
+def streamidentify():
+    try:
+        tojson = request.get_json();
+        stream = streams[tojson['sid']];
+        streampath = stream['path'];
+        conf = dict();
+        conf['macaddr'] = tojson['macaddr'];
+        conf['vlanid'] = stream['vid'];
+        conf['enable'] = tojson['enable'];
+        conf['vlantype'] = tojson['vlantype'];
+        conf['filtertype'] = tojson['filtertype'];
+        conf['streamhandle'] = tojson['sid'];
+        conf['index'] = tojson['sid'];
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            for key, value in devices.items():
+                if (value['name'] == board):
+                    deviceip = value['ip'];
+                    break;
+            conf['device'] = deviceip;
+            conf['iport'] = streampath[i][1];
+            conf['oport'] = streampath[i][2];
+
+            loadncqcisid(conf);
+        status = 'true';
+    except Exception:
+        status = 'false';
+    return jsonify({"status": status});
+
+Cqfct = '';
+Cqfot = '';
+Cqfslots = dict();
+@app.route('/cqfstreamset',  methods=['POST'])
+def cqfstreamset():
+    try:
+        global Cqfct;
+        global Cqfot;
+        global Cqfslots;
+        tojson = request.get_json();
+        stream = streams[tojson['sid']];
+        streampath = stream['path'];
+        if (Cqfct == ''):
+            Cqfct = tojson['cycletime'];
+        elif(Cqfct != tojson['cycletime']):
+            return jsonify({"status": 'false'});
+
+        if (Cqfot == ''):
+            Cqfot = tojson['opentime'];
+        elif(Cqfot != tojson['opentime']):
+            return jsonify({"status": 'false'});
+
+        conf = dict();
+        conf['priority'] = stream['priority'];
+        conf['basetime'] = '0';
+        conf['cycletime'] = Cqfct;
+        conf['opentime'] = Cqfot;
+        conf['sid'] = tojson['sid'];
+        slotnums = int(int(Cqfct) / int(Cqfot));
+
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            if (Cqfslots.get(board) == None):
+                Cqfslots[board] = 0;
+
+        suc = True;
+        for i in range(slotnums):
+            suc = True;
+            for j in range(len(streampath) - 1):
+                board = streampath[j][0];
+                if ((Cqfslots[board] & (1 << (i + j))) > 0):
+                    suc = False;
+                    break;
+            if (suc):
+                offset = i;
+                break;
+
+        if (suc == False):
+            return jsonify({"status": 'false'});
+
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            port = streampath[i][1];
+            if (port != ''):
+                    delay = int(Cqfot) * (offset + i - 1);
+                    board_qci_set(board, port, conf, delay);
+            port = streampath[i][2];
+            print(board+':'+port);
+            if (port == ''):
+                continue;
+            delay = int(Cqfot) * (offset + i);
+            Cqfslots[board] = Cqfslots[board] | (1 << (offset + i));
+            board_cqf_qbv_set(board, port, conf, delay);
+        status = 'true';
+    except Exception:
+        status = 'false';
+    return jsonify({"status": status, "offset": int(Cqfot) * offset});
 
 @app.route('/qbvstreamset',  methods=['POST'])
 def qbvstreamset():
@@ -597,23 +666,31 @@ def qbvstreamset():
         stream = streams[tojson['sid']];
         streampath = stream['path'];
         delay = 0;
+        pdelay = 0;
         conf = dict();
         conf['priority'] = stream['priority'];
         conf['basetime'] = tojson['basetime'];
         conf['cycletime'] = tojson['cycletime'];
         conf['opentime'] = tojson['opentime'];
+        conf['sid'] = tojson['sid'];
+        qcien = tojson['qcien'];
         for i in range(len(streampath)):
             board = streampath[i][0];
+            port = streampath[i][1];
+            if (qcien and port != ''):
+                    board_qci_set(board, port, conf, delay);
             port = streampath[i][2];
             print(board+':'+port);
             if (port == ''):
                 continue;
+            delay = delay + pdelay;
             baseoffset = board_qbv_set(board, port, conf, delay)
             if (baseoffset < 0):
                 status = 'false';
                 break;
             pdelays = literal_eval(gdelays[board]);
-            delay = delay + baseoffset + int(pdelays[port]);
+            pdelay = int(pdelays[port]);
+            delay = delay + baseoffset;
         status = 'true';
     except Exception:
         status = 'false';
@@ -650,11 +727,26 @@ def qbvset():
 def cbgen():
     try:
        tojson = request.get_json();
-       status, ret = loadport(tojson);
-       print("loadport status: (%s)" %(status))
-       status, ret = loadstream_handle(tojson);
-       print("loadstream_handle status: (%s)" %(status))
-       status, ret = loadnetconfcbgen(tojson);
+
+       ports = ['swp0', 'swp1', 'swp2', 'swp3'];
+       pconf = {'ports': ports, 'device': tojson['device']};
+       status, ret = loadport(pconf);
+       print("loadport status: (%s)" %(status));
+
+       portlist = tojson["portlist"];
+       defmac = '00-00-00-00-00-01';
+       oids = [];
+       count = 0;
+       for i in range(0, 4):
+           if portlist[i] == "out":
+               oids.append(str(count));
+               streamconf = {'index': str(count), 'streamhandle': str(count), 'iport': tojson['port_name'], 'oport': ports[i], 'macaddr': defmac, 'vlantype': 'all', 'vlanid': '1', 'device': tojson['device']};
+               status, ret = loadstream_handle(streamconf);
+               print("loadstream_handle status: (%s)" %(status));
+               count = count + 1;
+
+       cbconf = {'index': tojson['index'], 'streamhandle': tojson['index'], 'port': tojson['port_name'], 'input-id': '0', 'output-id': oids, 'device':  tojson['device']};
+       status, ret = loadnetconfcbgen(cbconf);
        print (ret);
     except Exception:
        status = 'false';
@@ -666,8 +758,8 @@ def cbgen():
 def cbrec():
     try:
        tojson = request.get_json();
-       #status, ret = loadport(tojson);
-       status, ret = loadport(tojson);
+       pconf = {'ports': [tojson['port_name']], 'device': tojson['device']};
+       status, ret = loadport(pconf);
        print("loadport status: (%s)" %(status))
        status, ret = loadnetconfcbrec(tojson);
        print (ret);
@@ -1001,14 +1093,16 @@ def board_qbv_conf_get(board, port):
     for interface in interfacelist:
         name = interface.getElementsByTagName('name')[0];
         if (name.firstChild.data == port):
-            nodelist = interface.getElementsByTagName('gate-parameters');
+            brport = interface.getElementsByTagName('bridge-port')[0];
+            nodelist = brport.getElementsByTagName('gate-parameter-table');
             for node in nodelist:
                 if (node.getAttribute("xmlns") == 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-sched'):
                     btnode = node.getElementsByTagName('admin-base-time')[0];
                     btsec = btnode.getElementsByTagName('seconds')[0].firstChild.data;
-                    btnsec = btnode.getElementsByTagName('fractional-seconds')[0].firstChild.data;
+                    btnsec = btnode.getElementsByTagName('nanoseconds')[0].firstChild.data;
                     basetime = int(btsec)*1000000000 + int(btnsec);
-                    gcl_list = node.getElementsByTagName('admin-control-list');
+                    admin_cl = node.getElementsByTagName('admin-control-list')[0];
+                    gcl_list = admin_cl.getElementsByTagName('gate-control-entry');
                     gcls = [];
                     cycletime = 0;
                     for gcl_node in gcl_list:
@@ -1022,6 +1116,50 @@ def board_qbv_conf_get(board, port):
 
     return None;
 
+def board_cqf_qbv_set(board, port, streamconf, delay):
+    conf = board_qbv_conf_get(board, port);
+    print("Get CQF Qbv config params:");
+    print (conf);
+    if (conf == None):
+        print("There is no CQF Qbv config on this device port");
+        gatestatus = 1 << int(streamconf['priority']);
+        basetime = streamconf['basetime'];
+        closetime = int(streamconf['cycletime']) - int(streamconf['opentime']) - delay;
+        closegate = 255 & (~gatestatus);
+        conf = {'basetime': basetime, 'cycletime': streamconf['cycletime'], 'entry': [{'gate': str(closegate), 'period': delay}, {'gate': str(gatestatus), 'period': streamconf['opentime']}, {'gate': str(closegate), 'period': str(closetime)}]};
+        print("Qbv config data:");
+        print (conf);
+        board_qbv_conf_set(board, port, conf);
+        return 0;
+
+    gatestatus = 1 << int(streamconf['priority']);
+    for entry in conf['entry']:
+        entry['gate'] = str(int(entry['gate']) & (~gatestatus));
+
+    offset = 0;
+    i = 0;
+    for entry in conf['entry']:
+        if (delay == offset):
+            lefttime = int(entry['period']) - int(streamconf['opentime']);
+            if (lefttime == 0):
+                entry['gate'] = str(gatestatus);
+            else:
+                entry['period'] = str(lefttime);
+                conf['entry'].insert(i, {'gate':str(gatestatus), 'period':streamconf['opentime']});
+            break;
+        elif (delay < (offset + int(entry['period']))):
+            entry['period'] = str(delay - offset);
+            conf['entry'].insert(i + 1, {'gate':str(gatestatus), 'period':streamconf['opentime']});
+            lefttime = offset + int(entry['period']) - delay - int(streamconf['opentime']);
+            if (lefttime > 0):
+                conf['entry'].insert(i + 2, {'gate':entry['gate'], 'period':str(lefttime)});
+            break;
+        else:
+            offset = offset + int(entry['period']);
+            i = i + 1;
+    board_qbv_conf_set(board, port, conf);
+    return 0;
+
 def board_qbv_set(board, port, streamconf, delay):
     conf = board_qbv_conf_get(board, port);
     print("Get Qbv config params:");
@@ -1029,8 +1167,8 @@ def board_qbv_set(board, port, streamconf, delay):
     btime = int(float(streamconf['basetime'])*1000000000);
     if (conf == None):
         print("There is no Qbv config on this device port");
-        btime += delay;
         gatestatus = 1 << int(streamconf['priority']);
+        btime += delay;
         closetime = int(streamconf['cycletime']) - int(streamconf['opentime']);
         conf = {'basetime': str(btime), 'cycletime': streamconf['cycletime'], 'entry': [{'gate': str(gatestatus), 'period': streamconf['opentime']}, {'gate': str(255), 'period': str(closetime)}]};
         print("Qbv config data:");
@@ -1067,6 +1205,27 @@ def board_qbv_set(board, port, streamconf, delay):
         interval_len += int(entry['period']);
 
     return -1;
+
+def board_qci_set(board, port, streamconf, delay):
+    for key, value in devices.items():
+        if (value['name'] == board):
+            deviceip = value['ip'];
+            break;
+
+    btime = int(float(streamconf['basetime'])*1000000000);
+    btime += delay;
+    closetime = int(streamconf['cycletime']) - int(streamconf['opentime']);
+    conf = {'index': streamconf['sid'], 'enable': 'true', 'initgate': 'open', 'initipv': streamconf['priority'], 'basetime': str(btime), 'cycletime': streamconf['cycletime'], 'entry': [{'gate': 'open', 'period': streamconf['opentime'], 'ipv': '-1'}, {'gate': 'closed', 'period': str(closetime), 'ipv': '-1'}]};
+    conf['port'] = port;
+    conf['whichpart'] = 'sgi';
+    conf['device'] = deviceip;
+    loadncqciset(conf);
+
+    sficonf = {'index': streamconf['sid'], 'enable': 'true', 'streamhandle': streamconf['sid'], 'priority': streamconf['priority'], 'gateid': streamconf['sid']};
+    sficonf['port'] = port;
+    sficonf['whichpart'] = 'sfi';
+    sficonf['device'] = deviceip;
+    loadncqciset(sficonf);
 
 @app.route('/topology/graph.json',methods=['GET'])
 def get_graph_file():
