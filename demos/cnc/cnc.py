@@ -387,6 +387,7 @@ def createsgixml(component, configdata):
     else :
         initipv.text = 'null';
 
+    ctsum = 0;
     adminlist = ET.SubElement(sgitable, 'psfp:admin-control-list');
     for i in range(len(configdata['entry'])):
         entry = ET.SubElement(adminlist, 'psfp:gate-control-entry');
@@ -398,6 +399,7 @@ def createsgixml(component, configdata):
         egate.text = configdata['entry'][i]['gate'];
         eti = ET.SubElement(entry, 'psfp:time-interval-value');
         eti.text = configdata['entry'][i]['period'];
+        ctsum = ctsum + int(configdata['entry'][i]['period']);
         einitipv = ET.SubElement(entry, 'psfp:ipv-spec');
         eintinitipv = int(configdata['entry'][i]['ipv']);
         if (eintinitipv >= 0 and eintinitipv < 8) :
@@ -420,7 +422,12 @@ def createsgixml(component, configdata):
 
     ct = ET.SubElement(sgitable, 'psfp:admin-cycle-time');
     ctnumerator = ET.SubElement(ct, 'psfp:numerator');
-    ctnumerator.text = configdata['cycletime'];
+
+    if configdata.__contains__('cycletime'):
+        ctnumerator.text = configdata['cycletime'];
+    else:
+        ctnumerator.text = str(ctsum);
+
     ctdenominator = ET.SubElement(ct, 'psfp:denominator');
     ctdenominator.text = '1000000000';
     suplist = ET.SubElement(streamgate, 'psfp:supported-list-max');
