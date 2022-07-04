@@ -1092,7 +1092,7 @@ def board_qbv_conf_get(board, port):
     interfacelist = dom1.getElementsByTagName('interface');
     for interface in interfacelist:
         name = interface.getElementsByTagName('name')[0];
-        if (name.firstChild.data == port):
+        if (name.firstChild != None and name.firstChild.data == port):
             brport = interface.getElementsByTagName('bridge-port')[0];
             nodelist = brport.getElementsByTagName('gate-parameter-table');
             for node in nodelist:
