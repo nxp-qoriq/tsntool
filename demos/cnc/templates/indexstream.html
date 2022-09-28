@@ -182,6 +182,9 @@ function reselect()
 		case 'CQF':
 			window.configframe.location.href = "/configStreamCQFHTML?sid="+sid;
 			break;
+		case 'Qci':
+			window.configframe.location.href = "/configStreamQciHTML?sid="+sid;
+			break;
 		default:
 			break;
 	};
@@ -194,6 +197,7 @@ function addtsnset() {
 			<option value=\"streamidentify\" selected>streamidentify</option> \
 			<option value=\"qbv\">qbv</option> \
 			<option value=\"CQF\">CQF</option> \
+			<option value=\"Qci\">Qci Flow Meter</option> \
 			</select>" ;
 	$('#btaddtsn').after(btport);
 	$('#tsnprotocol').after('<div style="position:relative;left:20px;top:2px"> \

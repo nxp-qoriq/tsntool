@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 #
-#Copyright 2019-2021 NXP
+# SPDX-License-Identifier: (GPL-2.0 OR MIT)
+#
+# Copyright 2019-2022 NXP
 #
 
 from flask import Flask, render_template, request
@@ -561,6 +563,10 @@ def configStreamQbvHTML():
 def configStreamCQFHTML():
     return render_template('configStreamCQF.html')
 
+@app.route('/configStreamQciHTML')
+def configStreamQciHTML():
+    return render_template('configStreamQci.html')
+
 @app.route('/streamidentify',  methods=['POST'])
 def streamidentify():
     try:
@@ -590,6 +596,36 @@ def streamidentify():
     except Exception:
         status = 'false';
     return jsonify({"status": status});
+
+@app.route('/qcistreamset',  methods=['POST'])
+def qcistreamset():
+    try:
+        tojson = request.get_json();
+        stream = streams[tojson['sid']];
+        streampath = stream['path'];
+        conf = dict();
+        conf['priority'] = stream['priority'];
+        conf['sid'] = tojson['sid'];
+        conf['enable'] = tojson['enable'];
+        conf['cir'] = tojson['cir'];
+        conf['cbs'] = tojson['cbs'];
+        conf['eir'] = tojson['eir'];
+        conf['ebs'] = tojson['ebs'];
+        conf['cf'] = tojson['cf'];
+        conf['cm'] = tojson['cm'];
+        conf['dropyellow'] = tojson['dropyellow'];
+        conf['markred'] = tojson['markred'];
+
+        for i in range(len(streampath)):
+            board = streampath[i][0];
+            port = streampath[i][1];
+            if (port != ''):
+                    status, ret = board_qcifmi_set(board, port, conf);
+    except Exception:
+        status = 'false';
+        return jsonify({"status": status, "getconfig": ''});
+        raise exceptions.WrongParametersException
+    return jsonify({"status": status, "getconfig":str(ret)});
 
 Cqfct = '';
 Cqfot = '';
@@ -1221,11 +1257,43 @@ def board_qci_set(board, port, streamconf, delay):
     conf['device'] = deviceip;
     loadncqciset(conf);
 
-    sficonf = {'index': streamconf['sid'], 'enable': 'true', 'streamhandle': streamconf['sid'], 'priority': streamconf['priority'], 'gateid': streamconf['sid']};
+    fmid = int(streamconf['sid']) + 63;
+
+    sficonf = {'index': streamconf['sid'], 'enable': 'true', 'streamhandle': streamconf['sid'], 'priority': streamconf['priority'], 'gateid': streamconf['sid'], 'flowmeterid': str(fmid)};
     sficonf['port'] = port;
     sficonf['whichpart'] = 'sfi';
     sficonf['device'] = deviceip;
     loadncqciset(sficonf);
+
+def board_qcifmi_set(board, port, streamconf):
+    for key, value in devices.items():
+        if (value['name'] == board):
+            deviceip = value['ip'];
+            break;
+
+    streamconf['port'] = port;
+    streamconf['whichpart'] = 'fmi';
+    streamconf['device'] = deviceip;
+    streamconf['index'] = streamconf['sid'];
+    fmid = int(streamconf['sid']) + 63;
+    status, ret = loadncqciset(streamconf);
+    if not (status):
+        return (status, ret)
+
+    sficonf = {'index': streamconf['sid'], 'enable': 'true', 'streamhandle': streamconf['sid'], 'priority': streamconf['priority'], 'gateid': streamconf['sid'], 'flowmeterid': str(fmid)};
+    sficonf['port'] = port;
+    sficonf['whichpart'] = 'sfi';
+    sficonf['device'] = deviceip;
+    status, ret = loadncqciset(sficonf);
+    if not (status):
+        sgiconf = {'index': streamconf['sid'], 'enable': 'true', 'initgate': 'open', 'initipv': streamconf['priority'], 'basetime': '0', 'cycletime': '1000000', 'entry': [{'gate': 'open', 'period': '1000000', 'ipv': '-1'}]};
+        sgiconf['port'] = port;
+        sgiconf['whichpart'] = 'sgi';
+        sgiconf['device'] = deviceip;
+        status, ret = loadncqciset(sgiconf);
+        if (status):
+            status, ret = loadncqciset(sficonf);
+    return (status, ret);
 
 @app.route('/topology/graph.json',methods=['GET'])
 def get_graph_file():

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Config Qci</title>
+    <script src="static/jquery.min.js">
+    </script>
+    <style>
+.button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 4px 6px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 13px;
+    margin: 2px 1px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;
+}
+.device {
+    background-color: white;
+    color: black;
+    border: 2px solid #4CAF50;
+    -webkit-transition-duration: 0.1s; /* Safari */
+    transition-duration: 0.1s;
+    border-radius: 5%;
+}
+.device:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.value {
+    background-color: white;
+    color: black;
+    width: 60px;
+    height: 10px;
+    border: 2px solid #4CAF50;
+    border-radius: 5%;
+}
+.value:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.confirm {
+    background-color: #4CAF50;
+    color: black;
+    position: center;
+    font-weight: bold;
+    font-size: 15px;
+    border: 2px solid #4CAF50;
+    border-radius: 5%;
+}
+.confirm:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.addlist {
+    background-color: white;
+    color: black;
+    padding: 2px 6px;
+    font-weight: bold;
+    border: 2px solid #4CAF50;
+    border-radius: 100%;
+}
+.addlist:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+.macinput {
+    background-color: white;
+    color: black;
+    padding: 2px 2px;
+    width: 20px;
+    font-weight: bold;
+    border: 1px solid #4CAF50;
+    border-radius: 5%;
+}
+.macinput:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+</style>
+<script>
+var fmioptions = {cf: false, cm: false, dropyellow: false, markred:false};
+Array.prototype.indexOf = function(val) {
+for (var i = 0; i < this.length; i++) {
+if (this[i] == val) return i;
+}
+return -1;
+};
+
+Array.prototype.remove = function(val) {
+var index = this.indexOf(val);
+if (index > -1) {
+this.splice(index, 1);
+}
+};
+
+</script>
+
+    <script>
+	function getUrlParam(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null) return unescape(r[2]);
+		return null;
+	}
+    </script>
+
+</head>
+<body>
+<script>
+
+function HTMLEncode(html) {
+	var temp = document.createElement("div");
+	(temp.textContent != null) ? (temp.textContent = html) : (temp.innerText = html);
+	var output = temp.innerHTML;
+	temp = null;
+	return output;
+}
+
+function fmioption(obj)
+{
+	if ($(obj).prop('checked') == true) {
+		console.log($(obj).val()+"checked");
+	} else {
+		console.log($(obj).val()+"checkout");
+	}
+
+	fmioptions[$(obj).val()] = $(obj).prop('checked');
+	console.log(fmioptions);
+}
+
+function confirmset()
+{
+	var qcifmi = {};
+	var sid = window.parent.formgetsid();
+
+	qcifmi["sid"] = sid;
+
+	qcifmi["enable"] = $('input:radio[name="enable"]:checked').val();
+
+	if (qcifmi["enable"] == 'true') {
+		if ($("#cir").val() != "")
+			qcifmi["cir"] = $("#cir").val();
+		if ($("#cbs").val() != "")
+			qcifmi["cbs"] = $("#cbs").val();
+		if ($("#eir").val() != "")
+			qcifmi["eir"] = $("#eir").val();
+		if ($("#ebs").val() != "")
+			qcifmi["ebs"] = $("#ebs").val();
+		qcifmi = Object.assign(qcifmi, fmioptions);
+	}
+
+	$.ajax({
+		type: "POST",
+		url: "/qcistreamset",
+		dataType: "json",
+		contentType: "application/json; charset=utf-8",
+		data: JSON.stringify(qcifmi),
+		success: function(data){
+			if (data.status == 'false')
+				alert('Feedback ERROR!');
+
+			$('#outputcontent', parent.document).append("<pre>"+"editconfig operation: "+ HTMLEncode(data.status)+"</pre>");
+			//$('#outputcontent', parent.document).append("<pre><code>"+parameter+"</code></pre>");
+			$('#outputcontent', parent.document).append("<pre>"+HTMLEncode('-------------------------')+window.parent.counter+HTMLEncode('-------------------------')+"</pre>");
+			window.parent.counter += 1;
+		}});
+}
+
+</script>
+<div>
+<form>
+<input class="button addlist" type="radio" name="enable" value="true" onclick="selectenable()"  checked="checked">enable
+&nbsp;<input class="button addlist" type="radio" name="enable" value="false" onclick="selectenable()">disable
+<br>&nbsp;&nbsp;&nbsp;cir:
+<input class="button value" type="text" name="cir" id="cir" onkeydown=octkeydown(this) onkeyup=octkeyup(this)>
+<br>&nbsp;&nbsp;&nbsp;cbs:
+<input class="button value" type="text" name="cbs" id="cbs" onkeydown=octkeydown(this) onkeyup=octkeyup(this)>
+<br>&nbsp;&nbsp;&nbsp;eir:
+<input class="button value" type="text" name="eir" id="eir" onkeydown=octkeydown(this) onkeyup=octkeyup(this)>
+<br>&nbsp;&nbsp;&nbsp;ebs:
+<input class="button value" type="text" name="ebs" id="ebs" onkeydown=octkeydown(this) onkeyup=octkeyup(this)>
+<br>&nbsp;&nbsp;&nbsp;
+<input class="checkbox" name="fmiopt" type="checkbox" onchange="fmioption(this)" value="cf" />couple flag
+<br>&nbsp;&nbsp;&nbsp;
+<input class="checkbox" name="fmiopt" type="checkbox" onchange="fmioption(this)" value="cm" />color blind
+<br>&nbsp;&nbsp;&nbsp;
+<input class="checkbox" name="fmiopt" type="checkbox" onchange="fmioption(this)" value="dropyellow" />drop yellow
+<br>&nbsp;&nbsp;&nbsp;
+<input class="checkbox" name="fmiopt" type="checkbox" onchange="fmioption(this)" value="markred" />mark red
+<br><br>
+<input class="button device confirm" type="button" name="confirm" id="confirm" onclick="confirmset()" value="Yes, confirm">
+</form>
+</div>
+</body>
+</html>
