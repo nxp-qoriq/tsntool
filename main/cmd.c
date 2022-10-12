@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /*
- * Copyright 2018-2019 NXP
+ * Copyright 2018-2019, 2022 NXP
  */
 
 #include <stdio.h>
@@ -404,7 +404,6 @@ static inline int is_hex_oct(char *str)
 					|| (*str >= 'a' && *str <= 'f')
 					|| (*str >= 'A' && *str <= 'F')) {
 				str++;
-				continue;
 			} else {
 				loge("warning:parameter '%s' is not right Hex expression\n", opt);
 				return -1;
