@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /*
- * Copyright 2018 NXP
+ * Copyright 2018, 2022 NXP
  */
 
 #define _GNU_SOURCE
@@ -253,6 +253,10 @@ char *readinput(const char *instruction, const char *tmpfile, FILE *output)
 			lseek(oldfd, 0, SEEK_SET);
 			if (size > 0) {
 				old_content = malloc(size+1);
+				if (!old_content) {
+					close(oldfd);
+					goto fail;
+				}
 				old_content[size] = '\0';
 				ret = read(oldfd, old_content, size);
 				if (ret != size) {
