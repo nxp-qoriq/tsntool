@@ -619,7 +619,7 @@ def qcistreamset():
         for i in range(len(streampath)):
             board = streampath[i][0];
             port = streampath[i][1];
-            if (port != ''):
+            if (port != '' and board.find('ls1028a') >= 0):
                     status, ret = board_qcifmi_set(board, port, conf);
     except Exception:
         status = 'false';
@@ -1274,8 +1274,11 @@ def board_qcifmi_set(board, port, streamconf):
     streamconf['port'] = port;
     streamconf['whichpart'] = 'fmi';
     streamconf['device'] = deviceip;
-    streamconf['index'] = streamconf['sid'];
-    fmid = int(streamconf['sid']) + 63;
+    if (port.find("swp") >= 0):
+        fmid = int(streamconf['sid']) + 63;
+    else:
+        fmid = int(streamconf['sid']);
+    streamconf['index'] = str(fmid);
     status, ret = loadncqciset(streamconf);
     if not (status):
         return (status, ret)
