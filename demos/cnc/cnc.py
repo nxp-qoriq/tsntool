@@ -984,6 +984,15 @@ def getNodesFromNeighborships():
     nodes = {'nodes':[]}
     bridges_list = []
     interfaces_client = {}
+    lldpport = []
+
+    if gneighbors_back:
+        for key,value in gneighbors_back.items():
+            if not value['lldp'][0]:
+                continue;
+            for interface in value['lldp'][0]['interface']:
+                lldpport.append(interface['name']);
+
     if not ginterfaces_back:
         return (nodes)
     for key,value in ginterfaces_back.items():
@@ -994,7 +1003,7 @@ def getNodesFromNeighborships():
         if not value['lldp'][0]:
             continue;
         for infs in value['lldp'][0]['interface']:
-            if (infs['via'] == 'unknown'):
+            if (infs['name'] not in lldpport):
                 one_inf = {"actual_bandwith":"1000000", "admin_status": "UP",
                         "description": "1G Interface",
                         "local_intf":infs['name'],
