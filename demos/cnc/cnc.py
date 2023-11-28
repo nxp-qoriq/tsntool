@@ -328,7 +328,7 @@ def loadncqcisid(configdata):
         configdata['iport'] = configdata['port'];
         configdata['oport'] = configdata['port'];
 
-    pconf['ports'] = [configdata['iport'], configdata['oport']];
+    pconf['ports'] = [configdata['port']];
     loadport(pconf);
     return loadstream_handle(configdata);
 
