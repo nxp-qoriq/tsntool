@@ -70,7 +70,7 @@ function tabledisplay()
 {
 	var tc_num = 8;
 
-	if (devname.indexOf("imx8mp") >= 0)
+	if (devname.indexOf("imx") >= 0)
 		tc_num = 5;
 
 	for (var i = 0; i < tc_num; i++)
@@ -82,14 +82,12 @@ function selectpreempt()
 	var i = 0;
 	$('input:radio[value="preemptable"]').each(function(){
 				if ($(this).is(":checked")) {
-					$("input[type=radio][name=enable][value=true]").attr("checked", "checked");
 					enable = 'true';
 					return false; //measn break;
 				}
 				i++;
 			});
 	if (i == 8) {
-		$('input:radio[name="enable"][value="false"]').attr("checked", "checked");
 		enable = 'false';
 	}
 }
@@ -153,10 +151,6 @@ function confirmset()
 <div>
 <form>
 <b>*device:
-
-<br><br>
-<input class="button addlist" type="radio" name="enable" value="true" onclick="selectenable()">enable
-<input class="button addlist" type="radio" name="enable" value="false" onclick="selectenable()" checked="checked">disable
 <br>&nbsp;&nbsp;
 <table>
 	<tr id="tc0" style="display: block;">
