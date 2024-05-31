@@ -479,8 +479,8 @@ int wait_tsn_multicast(struct alarm_info *ainfo)
 	fmgroups.mc[TSN_MCGRP_QCI] = rc;
 	nl_socket_add_memberships(s, rc, 0);
 
-	while(1)
-		nl_recvmsgs_default(s);
+	while(nl_recvmsgs_default(s) >= 0) {
+	}
 
 	clear_alarms();
 	nl_socket_free(s);
