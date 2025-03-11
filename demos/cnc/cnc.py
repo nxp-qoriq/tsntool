@@ -65,6 +65,7 @@ def loadnetconfqbv(configdata):
     interfaces = ET.Element('interfaces');
     interfaces.set('xmlns', 'urn:ietf:params:xml:ns:yang:ietf-interfaces');
     interfaces.set('xmlns:sched', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-sched');
+    interfaces.set('xmlns:sched-bridge', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-sched-bridge');
     interfaces.set('xmlns:dot1q', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge');
     interfaces.set('xmlns:ianaift', 'urn:ietf:params:xml:ns:yang:iana-if-type');
 
@@ -79,11 +80,11 @@ def loadnetconfqbv(configdata):
     itype.text = 'ianaift:ethernetCsmacd';
 
     brport = ET.SubElement(port, 'dot1q:bridge-port');
-    admin = ET.SubElement(brport, 'sched:gate-parameter-table');
-    gate_enable = ET.SubElement(admin, 'sched:gate-enabled');
+    admin = ET.SubElement(brport, 'sched-bridge:gate-parameter-table');
+    gate_enable = ET.SubElement(admin, 'sched-bridge:gate-enabled');
     gate_enable.text = configdata['enable'];
 
-    configchange = ET.SubElement(admin, 'sched:config-change');
+    configchange = ET.SubElement(admin, 'sched-bridge:config-change');
     configchange.text = 'true';
 
     #admin = ET.SubElement(port, 'admin');
@@ -96,37 +97,37 @@ def loadnetconfqbv(configdata):
 
         return loadNetconf(qbvxmlstr, configdata['device']);
 
-    admin_state = ET.SubElement(admin, 'sched:admin-gate-states');
+    admin_state = ET.SubElement(admin, 'sched-bridge:admin-gate-states');
     admin_state.text = '255';
-    sup_list = ET.SubElement(admin, 'sched:supported-list-max');
+    sup_list = ET.SubElement(admin, 'sched-bridge:supported-list-max');
     sup_list.text = '64';
-    sup_inverval = ET.SubElement(admin, 'sched:supported-interval-max');
+    sup_inverval = ET.SubElement(admin, 'sched-bridge:supported-interval-max');
     sup_inverval.text = '1000000000';
-    admin_gcl = ET.SubElement(admin, 'sched:admin-control-list');
+    admin_gcl = ET.SubElement(admin, 'sched-bridge:admin-control-list');
 
     ctsum = 0;
     for i in range(len(configdata['entry'])):
-        gateentry = ET.SubElement(admin_gcl,'sched:gate-control-entry');
+        gateentry = ET.SubElement(admin_gcl,'sched-bridge:gate-control-entry');
 
-        gindex = ET.SubElement(gateentry, 'sched:index');
+        gindex = ET.SubElement(gateentry, 'sched-bridge:index');
         gindex.text = str(i);
 
-        oname = ET.SubElement(gateentry, 'sched:operation-name');
+        oname = ET.SubElement(gateentry, 'sched-bridge:operation-name');
         oname.text = 'sched:set-gate-states';
 
-        gatestate = ET.SubElement(gateentry, 'sched:gate-states-value');
+        gatestate = ET.SubElement(gateentry, 'sched-bridge:gate-states-value');
         gatestate.text = str(configdata['entry'][i]['gate']);
-        ti = ET.SubElement(gateentry, 'sched:time-interval-value');
+        ti = ET.SubElement(gateentry, 'sched-bridge:time-interval-value');
         ti.text = str(configdata['entry'][i]['period']);
         ctsum = ctsum + int(configdata['entry'][i]['period']);
 
-    cycletime = ET.SubElement(admin, 'sched:admin-cycle-time');
-    ctnumerator = ET.SubElement(cycletime, 'sched:numerator');
+    cycletime = ET.SubElement(admin, 'sched-bridge:admin-cycle-time');
+    ctnumerator = ET.SubElement(cycletime, 'sched-bridge:numerator');
     if configdata.__contains__('cycletime'):
         ctnumerator.text = configdata['cycletime'];
     else:
         ctnumerator.text = str(ctsum);
-    ctdenominator = ET.SubElement(cycletime, 'sched:denominator');
+    ctdenominator = ET.SubElement(cycletime, 'sched-bridge:denominator');
     ctdenominator.text = '1000000000';
     if configdata.__contains__('basetime'):
         xs,zs=math.modf(float(configdata['basetime']));
@@ -135,10 +136,10 @@ def loadnetconfqbv(configdata):
             xshu = xsstr[1][0:9];
         else:
             xshu = xsstr[1].ljust(9, '0');
-        basetime = ET.SubElement(admin, 'sched:admin-base-time');
-        seconds = ET.SubElement(basetime, 'sched:seconds');
+        basetime = ET.SubElement(admin, 'sched-bridge:admin-base-time');
+        seconds = ET.SubElement(basetime, 'sched-bridge:seconds');
         seconds.text = str(int(zs));
-        fragseconds = ET.SubElement(basetime, 'sched:nanoseconds');
+        fragseconds = ET.SubElement(basetime, 'sched-bridge:nanoseconds');
         fragseconds.text = xshu;
 
     prettyXml(interfaces);
@@ -152,7 +153,7 @@ def loadnetconfqbv(configdata):
 def loadbridge_vlan(configdata):
     bridges = ET.Element('bridges');
     bridges.set('xmlns', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge");
-    bridges.set('xmlns:stream', "urn:ieee:std:802.1Q:yang:ieee802-dot1q-stream-id");
+    bridges.set('xmlns:nc', "urn:ietf:params:xml:ns:netconf:base:1.0");
 
     bridge = ET.SubElement(bridges, 'bridge');
     name = ET.SubElement(bridge, 'name');
@@ -169,6 +170,7 @@ def loadbridge_vlan(configdata):
     type_.text = 'edge-relay-component';
     bridgeVlan = ET.SubElement(component, 'bridge-vlan');
     vlan = ET.SubElement(bridgeVlan, 'vlan');
+    vlan.set('nc:operation', "replace");
     vid = ET.SubElement(vlan, 'vid');
     vid.text = configdata['vid'];
     portname = ET.SubElement(vlan, 'name');
@@ -291,8 +293,10 @@ def loadnetconfqbu(configdata):
     interfaces = ET.Element('interfaces');
     interfaces.set('xmlns', 'urn:ietf:params:xml:ns:yang:ietf-interfaces');
     interfaces.set('xmlns:dot1q', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge');
-    interfaces.set('xmlns:preempt', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-preemption');
-    interfaces.set('xmlns:ianaift', 'urn:ietf:params:xml:ns:yang:iana-if-type');
+    interfaces.set('xmlns:sched', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-sched');
+    interfaces.set('xmlns:sched-bridge', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-sched-bridge');
+    interfaces.set('xmlns:preempt-bridge', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-preemption-bridge');
+    interfaces.set('xmlns:nc', 'urn:ietf:params:xml:ns:netconf:base:1.0');
     port = ET.SubElement(interfaces, 'interface');
     iname = ET.SubElement(port, 'name');
     iname.text = configdata['port'];
@@ -300,17 +304,17 @@ def loadnetconfqbu(configdata):
     enable.text =  'true';
 
     itype = ET.SubElement(port, 'type');
+    itype.set('xmlns:ianaift', 'urn:ietf:params:xml:ns:yang:iana-if-type');
     itype.text = 'ianaift:ethernetCsmacd';
 
     brport = ET.SubElement(port, 'dot1q:bridge-port');
-    tclist = ET.SubElement(brport, 'preempt:frame-preemption-parameters');
+    tclist = ET.SubElement(brport, 'preempt-bridge:frame-preemption-parameters');
+    tclist.set('nc:operation', 'replace');
 
+    tctable = ET.SubElement(tclist, 'preempt-bridge:frame-preemption-status-table');
     for i in range(len(configdata['plist'])):
-        onetc = ET.SubElement(tclist, 'preempt:frame-preemption-status-table');
-        index = ET.SubElement(onetc, 'preempt:priority');
-        index.text = str(configdata['plist'][i]['tc']);
-        preemptable = ET.SubElement(onetc, 'preempt:frame-preemption-status');
-        preemptable.text = configdata['plist'][i]['preemptable'];
+        index = ET.SubElement(tctable, 'preempt-bridge:priority'+str(configdata['plist'][i]['tc']));
+        index.text = configdata['plist'][i]['preemptable'];
 
     prettyXml(interfaces);
     #ET.dump(interfaces);
@@ -333,9 +337,9 @@ def loadncqcisid(configdata):
     return loadstream_handle(configdata);
 
 def createsfixml(component, configdata):
-    streamfilter = ET.SubElement(component, 'sfsg:stream-filters');
-    sfitable = ET.SubElement(streamfilter, 'sfsg:stream-filter-instance-table');
-    index = ET.SubElement(sfitable, 'sfsg:stream-filter-instance-id');
+    streamfilter = ET.SubElement(component, 'psfp-bridge:stream-filters');
+    sfitable = ET.SubElement(streamfilter, 'psfp-bridge:stream-filter-instance-table');
+    index = ET.SubElement(sfitable, 'psfp-bridge:stream-filter-instance-id');
     index.text = configdata['index'];
     enable = ET.SubElement(sfitable, 'qci-augment:stream-filter-enabled');
     enable.text = configdata['enable'];
@@ -343,46 +347,46 @@ def createsfixml(component, configdata):
         return
 
     if (configdata.__contains__('streamhandle')):
-        streamhandle = ET.SubElement(sfitable, 'sfsg:stream-handle');
+        streamhandle = ET.SubElement(sfitable, 'psfp-bridge:stream-handle');
         streamhandle.text = configdata['streamhandle'];
     else:
-        streamhandle = ET.SubElement(sfitable, 'sfsg:wildcard');
+        streamhandle = ET.SubElement(sfitable, 'psfp-bridge:wildcard');
 
     prio = ('zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven');
-    priority = ET.SubElement(sfitable, 'sfsg:priority-spec');
+    priority = ET.SubElement(sfitable, 'psfp-bridge:priority-spec');
     if (configdata.__contains__('priority')):
         priority.text = prio[int(configdata['priority'])];
     else:
         priority.text = 'wildcard';
 
-    gateid = ET.SubElement(sfitable, 'sfsg:stream-gate-ref');
+    gateid = ET.SubElement(sfitable, 'psfp-bridge:stream-gate-ref');
     gateid.text = configdata['gateid'];
 
     if (configdata.__contains__('flowmeterid')):
-        fmiid = ET.SubElement(sfitable, 'psfp:flow-meter-instance-id');
+        fmiid = ET.SubElement(sfitable, 'psfp-bridge:flow-meter-ref');
         fmiid.text = configdata['flowmeterid'];
 
-    sdu = ET.SubElement(sfitable, 'sfsg:max-sdu-size');
+    sdu = ET.SubElement(sfitable, 'psfp-bridge:max-sdu-size');
     sdu.text = '1518';
-    oversizeen = ET.SubElement(sfitable, 'sfsg:stream-blocked-due-to-oversize-frame-enabled');
+    oversizeen = ET.SubElement(sfitable, 'psfp-bridge:stream-blocked-due-to-oversize-frame-enabled');
     oversizeen.text = 'false';
 
 
 def createsgixml(component, configdata):
-    streamgate = ET.SubElement(component, 'sfsg:stream-gates');
-    sgitable =  ET.SubElement(streamgate, 'sfsg:stream-gate-instance-table');
-    index = ET.SubElement(sgitable, 'sfsg:stream-gate-instance-id');
+    streamgate = ET.SubElement(component, 'psfp-bridge:stream-gates');
+    sgitable =  ET.SubElement(streamgate, 'psfp-bridge:stream-gate-instance-table');
+    index = ET.SubElement(sgitable, 'psfp-bridge:stream-gate-instance-id');
     index.text = configdata['index'];
-    gateen = ET.SubElement(sgitable, 'sfsg:gate-enable');
+    gateen = ET.SubElement(sgitable, 'psfp-bridge:gate-enable');
     gateen.text = configdata['enable'];
     if (configdata['enable'] == 'false'):
         return;
 
     prio = ('zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven');
 
-    initgate = ET.SubElement(sgitable, 'sfsg:admin-gate-states');
+    initgate = ET.SubElement(sgitable, 'psfp-bridge:admin-gate-states');
     initgate.text = configdata['initgate'];
-    initipv = ET.SubElement(sgitable, 'sfsg:admin-ipv');
+    initipv = ET.SubElement(sgitable, 'psfp-bridge:admin-ipv');
     intinitipv = int(configdata['initipv']);
     if (intinitipv >= 0 and intinitipv < 8) :
         initipv.text = prio[intinitipv];
@@ -390,19 +394,19 @@ def createsgixml(component, configdata):
         initipv.text = 'null';
 
     ctsum = 0;
-    adminlist = ET.SubElement(sgitable, 'psfp:admin-control-list');
+    adminlist = ET.SubElement(sgitable, 'psfp-bridge:admin-control-list');
     for i in range(len(configdata['entry'])):
-        entry = ET.SubElement(adminlist, 'psfp:gate-control-entry');
-        entryindex = ET.SubElement(entry, 'psfp:index');
+        entry = ET.SubElement(adminlist, 'psfp-bridge:gate-control-entry');
+        entryindex = ET.SubElement(entry, 'psfp-bridge:index');
         entryindex.text = str(i);
-        ename = ET.SubElement(entry, 'psfp:operation-name');
+        ename = ET.SubElement(entry, 'psfp-bridge:operation-name');
         ename.text = 'psfp:set-gate-and-ipv';
-        egate = ET.SubElement(entry, 'psfp:gate-state-value');
+        egate = ET.SubElement(entry, 'psfp-bridge:gate-state-value');
         egate.text = configdata['entry'][i]['gate'];
-        eti = ET.SubElement(entry, 'psfp:time-interval-value');
+        eti = ET.SubElement(entry, 'psfp-bridge:time-interval-value');
         eti.text = configdata['entry'][i]['period'];
         ctsum = ctsum + int(configdata['entry'][i]['period']);
-        einitipv = ET.SubElement(entry, 'psfp:ipv-spec');
+        einitipv = ET.SubElement(entry, 'psfp-bridge:ipv-spec');
         eintinitipv = int(configdata['entry'][i]['ipv']);
         if (eintinitipv >= 0 and eintinitipv < 8) :
             einitipv.text = prio[eintinitipv];
@@ -416,36 +420,36 @@ def createsgixml(component, configdata):
             xshu = xsstr[1][0:9];
         else:
             xshu = xsstr[1].ljust(9, '0');
-        basetime = ET.SubElement(sgitable, 'psfp:admin-base-time');
-        seconds = ET.SubElement(basetime, 'psfp:seconds');
+        basetime = ET.SubElement(sgitable, 'psfp-bridge:admin-base-time');
+        seconds = ET.SubElement(basetime, 'psfp-bridge:seconds');
         seconds.text = str(int(zs));
-        fragseconds = ET.SubElement(basetime, 'psfp:nanoseconds');
+        fragseconds = ET.SubElement(basetime, 'psfp-bridge:nanoseconds');
         fragseconds.text = xshu;
 
-    ct = ET.SubElement(sgitable, 'psfp:admin-cycle-time');
-    ctnumerator = ET.SubElement(ct, 'psfp:numerator');
+    ct = ET.SubElement(sgitable, 'psfp-bridge:admin-cycle-time');
+    ctnumerator = ET.SubElement(ct, 'psfp-bridge:numerator');
 
     if configdata.__contains__('cycletime'):
         ctnumerator.text = configdata['cycletime'];
     else:
         ctnumerator.text = str(ctsum);
 
-    ctdenominator = ET.SubElement(ct, 'psfp:denominator');
+    ctdenominator = ET.SubElement(ct, 'psfp-bridge:denominator');
     ctdenominator.text = '1000000000';
-    suplist = ET.SubElement(streamgate, 'psfp:supported-list-max');
+    suplist = ET.SubElement(streamgate, 'psfp-bridge:supported-list-max');
     suplist.text = '184';
-    supct = ET.SubElement(streamgate, 'psfp:supported-cycle-max');
-    supctnu = ET.SubElement(supct, 'psfp:numerator');
+    supct = ET.SubElement(streamgate, 'psfp-bridge:supported-cycle-max');
+    supctnu = ET.SubElement(supct, 'psfp-bridge:numerator');
     supctnu.text = '1';
-    supctden = ET.SubElement(supct, 'psfp:denominator');
+    supctden = ET.SubElement(supct, 'psfp-bridge:denominator');
     supctden.text = '1';
-    supitv = ET.SubElement(streamgate, 'psfp:supported-interval-max');
+    supitv = ET.SubElement(streamgate, 'psfp-bridge:supported-interval-max');
     supitv.text = '1000000000';
 
 def createfmixml(component, configdata):
-    flowmeter= ET.SubElement(component, 'psfp:flow-meters');
-    fmitable =  ET.SubElement(flowmeter, 'psfp:flow-meter-instance-table');
-    index = ET.SubElement(fmitable, 'psfp:flow-meter-instance-id');
+    flowmeter= ET.SubElement(component, 'psfp-bridge:flow-meters');
+    fmitable =  ET.SubElement(flowmeter, 'psfp-bridge:flow-meter-instance-table');
+    index = ET.SubElement(fmitable, 'psfp-bridge:flow-meter-instance-id');
     index.text = configdata['index'];
     enable = ET.SubElement(fmitable, 'qci-augment:flow-meter-enabled');
     enable.text = configdata['enable'];
@@ -453,37 +457,37 @@ def createfmixml(component, configdata):
         return;
 
     if configdata.__contains__('cir'):
-        cir = ET.SubElement(fmitable, 'psfp:committed-information-rate');
+        cir = ET.SubElement(fmitable, 'psfp-bridge:committed-information-rate');
         cir.text = configdata['cir'];
     if configdata.__contains__('cbs'):
-        cbs = ET.SubElement(fmitable, 'psfp:committed-burst-size');
+        cbs = ET.SubElement(fmitable, 'psfp-bridge:committed-burst-size');
         cbs.text = configdata['cbs'];
     if configdata.__contains__('eir'):
-        eir = ET.SubElement(fmitable, 'psfp:excess-information-rate');
+        eir = ET.SubElement(fmitable, 'psfp-bridge:excess-information-rate');
         eir.text = configdata['eir'];
     if configdata.__contains__('ebs'):
-        ebs = ET.SubElement(fmitable, 'psfp:excess-burst-size');
+        ebs = ET.SubElement(fmitable, 'psfp-bridge:excess-burst-size');
         ebs.text = configdata['ebs'];
 
-    cf = ET.SubElement(fmitable, 'psfp:coupling-flag');
+    cf = ET.SubElement(fmitable, 'psfp-bridge:coupling-flag');
     if (configdata['cf'] == True):
         cf.text = 'one';
     else:
         cf.text = 'zero';
 
-    cm = ET.SubElement(fmitable, 'psfp:color-mode');
+    cm = ET.SubElement(fmitable, 'psfp-bridge:color-mode');
     if (configdata['cm'] == True):
         cm.text = 'color-blind';
     else:
         cm.text = 'color-aware';
 
-    dropyellow = ET.SubElement(fmitable, 'psfp:drop-on-yellow');
+    dropyellow = ET.SubElement(fmitable, 'psfp-bridge:drop-on-yellow');
     if (configdata['dropyellow'] == True):
         dropyellow.text = 'true';
     else:
         dropyellow.text = 'false';
 
-    supfmi = ET.SubElement(flowmeter, 'psfp:max-flow-meter-instances');
+    supfmi = ET.SubElement(flowmeter, 'psfp-bridge:max-flow-meter-instances');
     supfmi.text = '183';
 
 def loadncqciset(configdata):
@@ -492,6 +496,7 @@ def loadncqciset(configdata):
     bridges.set('xmlns', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-bridge');
     bridges.set('xmlns:sfsg', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-stream-filters-gates');
     bridges.set('xmlns:psfp', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-psfp');
+    bridges.set('xmlns:psfp-bridge', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-psfp-bridge');
     bridges.set('xmlns:qci-augment', 'urn:ieee:std:802.1Q:yang:ieee802-dot1q-qci-augment');
 
     bridge = ET.SubElement(bridges, 'bridge');
