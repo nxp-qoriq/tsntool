@@ -123,13 +123,15 @@ async def deal_message(websocket, cmd):
 #    print(f"{feedback}")
 
 
-async def remotecall(websocket, path):
+async def remotecall(websocket):
     async for message in websocket:
         print(f"< {message}")
         await deal_message(websocket, message)
 
-start_server = websockets.serve(remotecall, "0.0.0.0", 8181)
+async def main():
+    async with websockets.serve(remotecall, "0.0.0.0", 8181):
+        print("WebSocket server running at ws://0.0.0.0:8181/")
+        await asyncio.Future()
 
-asyncio.get_event_loop().run_until_complete(start_server)
-asyncio.get_event_loop().run_forever()
-
+if __name__ == "__main__":
+    asyncio.run(main())
