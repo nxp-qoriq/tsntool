@@ -456,7 +456,7 @@ int set_period_alarm(uint64_t ts, uint64_t offset,
 pthread_t *create_alarm_common(uint64_t ts, uint32_t offset, uint32_t cycle,
 			      void (*callback_func)(void *data), void *data);
 int delete_alarm_common(pthread_t *thread);
-int wait_tsn_multicast();
+int wait_tsn_multicast(struct alarm_info *ainfo);
 void get_para_from_json(int type, cJSON *json, void *para);
 
 bool get_conf_monitor_status(void);
