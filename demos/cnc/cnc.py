@@ -104,6 +104,8 @@ def loadnetconfqbv(configdata):
     sup_inverval = ET.SubElement(admin, 'sched-bridge:supported-interval-max');
     sup_inverval.text = '1000000000';
     admin_gcl = ET.SubElement(admin, 'sched-bridge:admin-control-list');
+    admin_gcl.set('xmlns:nc', 'urn:ietf:params:xml:ns:netconf:base:1.0');
+    admin_gcl.set('nc:operation', 'replace');
 
     ctsum = 0;
     for i in range(len(configdata['entry'])):
