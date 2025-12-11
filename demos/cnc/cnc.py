@@ -30,6 +30,20 @@ GROUP_NAME="real-time-edge"
 def removeknowhost():
 	print("remove /root/.ssh/known_hosts");
 	subprocess.call(["rm", "-f", '/root/.ssh/known_hosts']);
+	ssh_config_path = '/root/.ssh/config'
+	ssh_config_content = """
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
+"""
+	try:
+		os.makedirs('/root/.ssh', exist_ok=True)
+		with open(ssh_config_path, 'w') as f:
+			f.write(ssh_config_content)
+		os.chmod(ssh_config_path, 0o600)
+		print(f"SSH config updated: {ssh_config_path}")
+	except Exception as e:
+		print(f"Failed to update SSH config: {e}")
 
 def prettyXml(element, indent = '\t', newline = '\n', level = 0):
     if element:
@@ -47,7 +61,6 @@ def prettyXml(element, indent = '\t', newline = '\n', level = 0):
 
 def loadNetconf(xmlstr, device):
     print (xmlstr);
-    removeknowhost();
     #start the netconf request
     session = netconf.Session.connect(device, int('830'), str('root'))
     dstype = netconf.RUNNING
@@ -537,7 +550,6 @@ def loadncqciset(configdata):
     return loadNetconf(qcixmlstr, configdata['device']);
 
 def loadgetconfig(configdata):
-    removeknowhost();
     session = netconf.Session.connect(configdata['device'], int('830'), str('root'))
     dstype = netconf.RUNNING;
     getfeedback = session.getConfig(dstype);
@@ -1621,6 +1633,7 @@ api.add_resource(delays_ports, '/restapi/delays/<string:devicename>')
 api.add_resource(get_path, '/restapi/getpath/<string:source>,<string:target>')
 
 if __name__ == '__main__':
+    removeknowhost()
     app.run(host = "0.0.0.0" , port = 8180)
 
 t_probeboards.join()
